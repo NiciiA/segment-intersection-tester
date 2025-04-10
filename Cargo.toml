@@ -1,0 +1,16 @@
+[package]
+name = "test_geo"
+version = "0.1.0"
+edition = "2021"
+
+# Optional: Add a description, authors, license, etc.
+# description = "A simple Rust project"
+# authors = ["Your Name <youremail@example.com>"]
+# license = "MIT OR Apache-2.0"
+
+[dependencies]
+geo = "0.30.0"
+csv = "1.3.0"
+psutil = "3.3.0"
+log = "0.4"
+env_logger = "0.11"
