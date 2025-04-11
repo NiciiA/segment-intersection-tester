@@ -215,9 +215,64 @@ def parallel_and_collinear_16():
     return segments
 
 
+def parallel_and_collinear_17():
+    """
+        Testing how it handles vertically parallel segments
+    """
+    segments = [Segment(Point(50, 10), Point(50, 90)),
+                Segment(Point(50, 10), Point(50, 90))]
+
+    return segments
+
+
+def parallel_and_collinear_18():
+    """
+        Testing how it handles vertically parallel segments closely, by one
+    """
+    segments = [Segment(Point(50, 10), Point(50, 90))]
+
+    next_value = math.nextafter(50.0, math.inf)
+
+    segments.append(Segment(Point(next_value, 10),
+                            Point(next_value, 80)))
+
+    return segments
+
+
+def parallel_and_collinear_19():
+    """
+        Testing how it handles vertically parallel segments closely, by two
+    """
+    segments = [Segment(Point(50, 10), Point(50, 90))]
+
+    next_value = math.nextafter(50.0, math.inf)
+    next_value = math.nextafter(next_value, math.inf)
+
+    segments.append(Segment(Point(next_value, 10),
+                            Point(next_value, 80)))
+
+    return segments
+
+
+def parallel_and_collinear_20():
+    """
+        Testing how it handles vertically parallel segments closely, by three
+    """
+    segments = [Segment(Point(50, 10), Point(50, 90))]
+
+    next_value = math.nextafter(50.0, math.inf)
+    next_value = math.nextafter(next_value, math.inf)
+    next_value = math.nextafter(next_value, math.inf)
+
+    segments.append(Segment(Point(next_value, 10),
+                            Point(next_value, 80)))
+
+    return segments
+
+
 def length_0_1():
     """
-        Testing how it handles a single length-0 segment
+        Testing how it handles a single length-0 segment (Precondition)
     """
     segments = [Segment(Point(50, 50), Point(50, 50))]
 
@@ -854,6 +909,10 @@ def main():
         (parallel_and_collinear_14, (), "parallel_and_collinear_14.csv"),
         (parallel_and_collinear_15, (), "parallel_and_collinear_15.csv"),
         (parallel_and_collinear_16, (), "parallel_and_collinear_16.csv"),
+        (parallel_and_collinear_17, (), "parallel_and_collinear_17.csv"),
+        (parallel_and_collinear_18, (), "parallel_and_collinear_18.csv"),
+        (parallel_and_collinear_19, (), "parallel_and_collinear_19.csv"),
+        (parallel_and_collinear_20, (), "parallel_and_collinear_20.csv"),
         (length_0_1, (), "length_0_1.csv"),
         (length_0_2, (), "length_0_2.csv"),
         (length_0_3, (), "length_0_3.csv"),
