@@ -58,16 +58,19 @@ ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${LEDA_HOME}/lib"
 WORKDIR /usr/src/app
 
 # Sample code (program.cpp) - modify with the actual C++ code
+COPY ./utils.h .
 COPY ./test_leda.cpp .
 COPY ./test_leda_rational.cpp .
-COPY ./test_leda_rational_f.cpp .
+COPY ./test_leda_pairwise.cpp .
+COPY ./test_leda_pairwise_rational.cpp .
 COPY ./tester.py .
 COPY ./distancer.py .
 
 # Compile the C++ program with LEDA
-RUN g++ -o test_leda_ud test_leda.cpp -I${LEDA_HOME}/incl -L${LEDA_HOME} -lleda
-RUN g++ -o test_leda_ur test_leda_rational.cpp -I${LEDA_HOME}/incl -L${LEDA_HOME} -lleda
-# RUN g++ -o test_leda_ur_f test_leda_rational_f.cpp -I${LEDA_HOME}/incl -L${LEDA_HOME} -lleda
+RUN g++ -o test_leda_ud test_leda.cpp -I. -I${LEDA_HOME}/incl -L${LEDA_HOME} -lleda
+RUN g++ -o test_leda_ur test_leda_rational.cpp -I. -I${LEDA_HOME}/incl -L${LEDA_HOME} -lleda
+RUN g++ -o test_leda_pairwise_ud test_leda_pairwise.cpp -I. -I${LEDA_HOME}/incl -L${LEDA_HOME} -lleda
+RUN g++ -o test_leda_pairwise_ur test_leda_pairwise_rational.cpp -I. -I${LEDA_HOME}/incl -L${LEDA_HOME} -lleda
 
 # Run tests using the CSV files
 CMD ["/opt/venv/bin/python", "tester.py", "-f", "/data/csv_files", "-c", "./test_leda,./test_leda_r", "-a", "/data/csv_files/accuracies"]
@@ -80,12 +83,12 @@ CMD ["/opt/venv/bin/python", "tester.py", "-f", "/data/csv_files", "-c", "./test
 # /opt/venv/bin/python tester.py -f /data/csv_files -a /data/csv_files/accuracies -c ./test_leda_ud,./test_leda_ur
 
 
-#docker cp d72312639732:/usr/src/app/distances.csv /Users/xyz/PycharmProjects/SegGen/leda_distances.csv && \
-#docker cp d72312639732:/usr/src/app/memory_usage.csv /Users/xyz/PycharmProjects/SegGen/leda_memory_usage.csv && \
-#docker cp d72312639732:/usr/src/app/results.csv /Users/xyz/PycharmProjects/SegGen/leda_results.csv && \
-#docker cp d72312639732:/usr/src/app/time_taken.csv /Users/xyz/PycharmProjects/SegGen/leda_time_taken.csv
+#docker cp d72312639732:/usr/src/app/distances.csv /Users/nicolasackermann/PycharmProjects/SegGen/leda_distances.csv && \
+#docker cp d72312639732:/usr/src/app/memory_usage.csv /Users/nicolasackermann/PycharmProjects/SegGen/leda_memory_usage.csv && \
+#docker cp d72312639732:/usr/src/app/results.csv /Users/nicolasackermann/PycharmProjects/SegGen/leda_results.csv && \
+#docker cp d72312639732:/usr/src/app/time_taken.csv /Users/nicolasackermann/PycharmProjects/SegGen/leda_time_taken.csv
 
-# docker cp dfef351740ce:/usr/src/app/distances.csv /Users/xyz/PycharmProjects/SegGen/leda_distances.csv
-# docker cp dfef351740ce:/usr/src/app/memory_usage.csv /Users/xyz/PycharmProjects/SegGen/leda_memory_usage.csv
-# docker cp dfef351740ce:/usr/src/app/results.csv /Users/xyz/PycharmProjects/SegGen/leda_results.csv
-# docker cp dfef351740ce:/usr/src/app/time_taken.csv /Users/xyz/PycharmProjects/SegGen/leda_time_taken.csv
+# docker cp dfef351740ce:/usr/src/app/distances.csv /Users/nicolasackermann/PycharmProjects/SegGen/leda_distances.csv
+# docker cp dfef351740ce:/usr/src/app/memory_usage.csv /Users/nicolasackermann/PycharmProjects/SegGen/leda_memory_usage.csv
+# docker cp dfef351740ce:/usr/src/app/results.csv /Users/nicolasackermann/PycharmProjects/SegGen/leda_results.csv
+# docker cp dfef351740ce:/usr/src/app/time_taken.csv /Users/nicolasackermann/PycharmProjects/SegGen/leda_time_taken.csv
