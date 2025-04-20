@@ -611,8 +611,7 @@ def rounding(num_segments: int, max_coord_x=100.0, max_coord_y=100.0):
 
     x_positions = np.linspace(10, int(max_coord_x * 0.9), num_segments)
     for x in x_positions:
-        x_shifted = x + 5
-        segments.append(Segment(Point(x, 5), Point(x_shifted, max_coord_y * 0.85)))
+        segments.append(Segment(Point(x, 5), Point(x, max_coord_y * 0.85)))
 
     return segments
 
@@ -689,23 +688,26 @@ def find_intersection_r(seg1, seg2):
     x3, y3 = Fraction(seg2.p1.x), Fraction(seg2.p1.y)
     x4, y4 = Fraction(seg2.p2.x), Fraction(seg2.p2.y)
 
-    denominator = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
+    denominator = (x1 - x2) * (y4 - y3) - (y1 - y2) * (x4 - x3)
 
     if denominator == 0:
         if ((y2 - y1) * (x3 - x1) == (y3 - y1) * (x2 - x1)) and ((y4 - y3) * (x1 - x3) == (y1 - y3) * (x4 - x3)):
             return find_collinear_intersections(seg1, seg2)
         return []
 
-    num_x = ((x1 * y2 - y1 * x2) * (x3 - x4)) - ((x1 - x2) * (x3 * y4 - y3 * x4))
-    num_y = ((x1 * y2 - y1 * x2) * (y3 - y4)) - ((y1 - y2) * (x3 * y4 - y3 * x4))
+    num_x = (x4 - x2) * (y4 - y3) - (x4 - x3) * (y4 - y2)
+    num_y = (x1 - x2) * (y4 - y2) - (x4 - x2) * (y1 - y2)
 
     inter_x = num_x / denominator
     inter_y = num_y / denominator
 
-    if (min(x1, x2) <= inter_x <= max(x1, x2)) and (min(y1, y2) <= inter_y <= max(y1, y2)) \
-            and (min(x3, x4) <= inter_x <= max(x3, x4)) and (min(y3, y4) <= inter_y <= max(y3, y4)):
-        return [Point(inter_x, inter_y)]
-    return []
+    if inter_x < 0 or inter_x > 1:
+        return []
+
+    if inter_y < 0 or inter_y > 1:
+        return []
+
+    return [Point(x1 * inter_x * (x2 - x1), y1 * inter_x * (y2 - y1))]
 
 
 def find_intersection_d(seg1, seg2):
@@ -716,23 +718,26 @@ def find_intersection_d(seg1, seg2):
     x3, y3 = seg2.p1.x, seg2.p1.y
     x4, y4 = seg2.p2.x, seg2.p2.y
 
-    denominator = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
+    denominator = (x1 - x2) * (y4 - y3) - (y1 - y2) * (x4 - x3)
 
     if denominator == 0:
         if ((y2 - y1) * (x3 - x1) == (y3 - y1) * (x2 - x1)) and ((y4 - y3) * (x1 - x3) == (y1 - y3) * (x4 - x3)):
             return find_collinear_intersections(seg1, seg2)
         return []
 
-    num_x = ((x1 * y2 - y1 * x2) * (x3 - x4)) - ((x1 - x2) * (x3 * y4 - y3 * x4))
-    num_y = ((x1 * y2 - y1 * x2) * (y3 - y4)) - ((y1 - y2) * (x3 * y4 - y3 * x4))
+    num_x = (x4 - x2) * (y4 - y3) - (x4 - x3) * (y4 - y2)
+    num_y = (x1 - x2) * (y4 - y2) - (x4 - x2) * (y1 - y2)
 
     inter_x = num_x / denominator
     inter_y = num_y / denominator
 
-    if (min(x1, x2) <= inter_x <= max(x1, x2)) and (min(y1, y2) <= inter_y <= max(y1, y2)) \
-            and (min(x3, x4) <= inter_x <= max(x3, x4)) and (min(y3, y4) <= inter_y <= max(y3, y4)):
-        return [Point(inter_x, inter_y)]
-    return []
+    if inter_x < 0 or inter_x > 1:
+        return []
+
+    if inter_y < 0 or inter_y > 1:
+        return []
+
+    return [Point(x1 * inter_x * (x2 - x1), y1 * inter_x * (y2 - y1))]
 
 
 def find_collinear_intersections(seg1, seg2):
@@ -768,6 +773,13 @@ def calculate_intersections_r(segments):
     return intersections
 
 
+def calculate_intersections_q(intersections):
+    intersections_x = []
+    for intersection in intersections:
+        intersections_x.append(Point(float(intersection.x), float(intersection.y)))
+    return intersections_x
+
+
 def accurate_intersections_d(segments):
     intersections = []
     for seg1, seg2 in itertools.combinations(segments, 2):
@@ -795,8 +807,8 @@ def sort_segments(segments):
 
 
 def save_segments_to_csv(segments, filename="segments.csv"):
-    os.makedirs('tests_x', exist_ok=True)
-    filepath = os.path.join('tests_x', filename)
+    os.makedirs('tests', exist_ok=True)
+    filepath = os.path.join('tests', filename)
 
     with open(filepath, 'w', newline='') as csvfile:
         fieldnames = ['x1', 'y1', 'x2', 'y2']
@@ -810,9 +822,9 @@ def save_segments_to_csv(segments, filename="segments.csv"):
 
 
 def save_accuracy_to_csv(accuracies_d, accuracies_r, filename="accuracy.csv"):
-    os.makedirs('tests_x/accuracies', exist_ok=True)
-    filepath_d = os.path.join('tests_x/accuracies', "d_" + filename)
-    filepath_r = os.path.join('tests_x/accuracies', "r_" + filename)
+    os.makedirs('tests/accuracies', exist_ok=True)
+    filepath_d = os.path.join('tests/accuracies', "d_" + filename)
+    filepath_r = os.path.join('tests/accuracies', "r_" + filename)
 
     unique_intersections_d = set()
 
@@ -878,13 +890,15 @@ def process_configuration(func, params, filename):
     segments = func(*params)  # Call the function dynamically
     intersections_d = calculate_intersections_d(segments)
     intersections_r = calculate_intersections_r(segments)
+    intersections_q = calculate_intersections_q(intersections_r)
 
     distinct_intersection_d = set(intersections_d)
     distinct_intersection_r = set(intersections_r)
+    distinct_intersection_q = set(intersections_q)
 
-    save_segments_to_csv(segments, str(len(intersections_d)) + "-" + str(len(distinct_intersection_d)) + "-" + str(len(intersections_r)) + "-" + str(len(distinct_intersection_r)) + "_" + filename)
+    save_segments_to_csv(segments, str(len(intersections_d)) + "-" + str(len(distinct_intersection_d)) + "-" + str(len(intersections_r)) + "-" + str(len(distinct_intersection_r)) + "-" + str(len(distinct_intersection_q)) + "_" + filename)
 
-    if filename.startswith(("accuracy_", "rounding_")): # "parallel_", "length_", "star_",
+    if filename.startswith(("accuracy_", "rounding_", "star_intersections_7_", "star_intersections_8_")): # "parallel_", "length_", "star_",
         # accuracies = accurate_intersections(segments)
         save_accuracy_to_csv(intersections_d, intersections_r, filename)
 
@@ -940,255 +954,252 @@ def main():
         (accuracy_9, (), "accuracy_9.csv"),
         (accuracy_10, (), "accuracy_10.csv"),
         # Special star_intersections_4 with extra arguments
-        (star_intersections_4, (500, 10000), "star_intersections_4_s_500.csv"),
+        #(star_intersections_4, (500, 10000), "star_intersections_4_s_500.csv"),
         (star_intersections_4, (1000, 10000), "star_intersections_4_s_1000.csv"),
-        (star_intersections_4, (1500, 10000), "star_intersections_4_s_1500.csv"),
+        #(star_intersections_4, (1500, 10000), "star_intersections_4_s_1500.csv"),
         (star_intersections_4, (2000, 10000), "star_intersections_4_s_2000.csv"),
-        (star_intersections_4, (2500, 10000), "star_intersections_4_s_2500.csv"),
+        #(star_intersections_4, (2500, 10000), "star_intersections_4_s_2500.csv"),
         (star_intersections_4, (3000, 10000), "star_intersections_4_s_3000.csv"),
-        (star_intersections_4, (3500, 10000), "star_intersections_4_s_3500.csv"),
+        #(star_intersections_4, (3500, 10000), "star_intersections_4_s_3500.csv"),
         (star_intersections_4, (4000, 10000), "star_intersections_4_s_4000.csv"),
-        (star_intersections_4, (4500, 10000), "star_intersections_4_s_4500.csv"),
+        #(star_intersections_4, (4500, 10000), "star_intersections_4_s_4500.csv"),
         (star_intersections_4, (5000, 10000), "star_intersections_4_s_5000.csv"),
-        (star_intersections_4, (5500, 10000), "star_intersections_4_s_5500.csv"),
-        (star_intersections_4, (6000, 10000), "star_intersections_4_s_6000.csv"),
-        (star_intersections_4, (6500, 10000), "star_intersections_4_s_6500.csv"),
-        (star_intersections_4, (7000, 10000), "star_intersections_4_s_7000.csv"),
-        (star_intersections_4, (7500, 10000), "star_intersections_4_s_7500.csv"),
+        #(star_intersections_4, (5500, 10000), "star_intersections_4_s_5500.csv"),
+        #(star_intersections_4, (6000, 10000), "star_intersections_4_s_6000.csv"),
+        #(star_intersections_4, (6500, 10000), "star_intersections_4_s_6500.csv"),
+        #(star_intersections_4, (7000, 10000), "star_intersections_4_s_7000.csv"),
+        #(star_intersections_4, (7500, 10000), "star_intersections_4_s_7500.csv"),
         # (star_intersections_4, (8000, 10000), "star_intersections_4_s_8000.csv"),
         # (star_intersections_4, (8500, 10000), "star_intersections_4_s_8500.csv"),
         # (star_intersections_4, (9000, 10000), "star_intersections_4_s_9000.csv"),
         # (star_intersections_4, (9500, 10000), "star_intersections_4_s_9500.csv"),
         # (star_intersections_4, (10000, 10000), "star_intersections_4_s_10000.csv"),
 
-        (star_intersections_6, (500, 10000), "star_intersections_6_s_500.csv"),
+        #(star_intersections_6, (500, 10000), "star_intersections_6_s_500.csv"),
         (star_intersections_6, (1000, 10000), "star_intersections_6_s_1000.csv"),
-        (star_intersections_6, (1500, 10000), "star_intersections_6_s_1500.csv"),
+        #(star_intersections_6, (1500, 10000), "star_intersections_6_s_1500.csv"),
         (star_intersections_6, (2000, 10000), "star_intersections_6_s_2000.csv"),
-        (star_intersections_6, (2500, 10000), "star_intersections_6_s_2500.csv"),
+        #(star_intersections_6, (2500, 10000), "star_intersections_6_s_2500.csv"),
         (star_intersections_6, (3000, 10000), "star_intersections_6_s_3000.csv"),
-        (star_intersections_6, (3500, 10000), "star_intersections_6_s_3500.csv"),
+        #(star_intersections_6, (3500, 10000), "star_intersections_6_s_3500.csv"),
         (star_intersections_6, (4000, 10000), "star_intersections_6_s_4000.csv"),
-        (star_intersections_6, (4500, 10000), "star_intersections_6_s_4500.csv"),
+        #(star_intersections_6, (4500, 10000), "star_intersections_6_s_4500.csv"),
         (star_intersections_6, (5000, 10000), "star_intersections_6_s_5000.csv"),
-        (star_intersections_6, (5500, 10000), "star_intersections_6_s_5500.csv"),
-        (star_intersections_6, (6000, 10000), "star_intersections_6_s_6000.csv"),
-        (star_intersections_6, (6500, 10000), "star_intersections_6_s_6500.csv"),
-        (star_intersections_6, (7000, 10000), "star_intersections_6_s_7000.csv"),
-        (star_intersections_6, (7500, 10000), "star_intersections_6_s_7500.csv"),
+        #(star_intersections_6, (5500, 10000), "star_intersections_6_s_5500.csv"),
+        #(star_intersections_6, (6000, 10000), "star_intersections_6_s_6000.csv"),
+        #(star_intersections_6, (6500, 10000), "star_intersections_6_s_6500.csv"),
+        #(star_intersections_6, (7000, 10000), "star_intersections_6_s_7000.csv"),
+        #(star_intersections_6, (7500, 10000), "star_intersections_6_s_7500.csv"),
         # (star_intersections_6, (8000, 10000), "star_intersections_6_s_8000.csv"),
         # (star_intersections_6, (8500, 10000), "star_intersections_6_s_8500.csv"),
         # (star_intersections_6, (9000, 10000), "star_intersections_6_s_9000.csv"),
         # (star_intersections_6, (9500, 10000), "star_intersections_6_s_9500.csv"),
         # (star_intersections_6, (10000, 10000), "star_intersections_6_s_10000.csv"),
 
-        (star_intersections_7, (500, 10000), "star_intersections_7_s_500.csv"),
+        #(star_intersections_7, (500, 10000), "star_intersections_7_s_500.csv"),
         (star_intersections_7, (1000, 10000), "star_intersections_7_s_1000.csv"),
-        (star_intersections_7, (1500, 10000), "star_intersections_7_s_1500.csv"),
+        #(star_intersections_7, (1500, 10000), "star_intersections_7_s_1500.csv"),
         (star_intersections_7, (2000, 10000), "star_intersections_7_s_2000.csv"),
-        (star_intersections_7, (2500, 10000), "star_intersections_7_s_2500.csv"),
+        #(star_intersections_7, (2500, 10000), "star_intersections_7_s_2500.csv"),
         (star_intersections_7, (3000, 10000), "star_intersections_7_s_3000.csv"),
-        (star_intersections_7, (3500, 10000), "star_intersections_7_s_3500.csv"),
+        #(star_intersections_7, (3500, 10000), "star_intersections_7_s_3500.csv"),
         (star_intersections_7, (4000, 10000), "star_intersections_7_s_4000.csv"),
-        (star_intersections_7, (4500, 10000), "star_intersections_7_s_4500.csv"),
+        #(star_intersections_7, (4500, 10000), "star_intersections_7_s_4500.csv"),
         (star_intersections_7, (5000, 10000), "star_intersections_7_s_5000.csv"),
-        (star_intersections_7, (5500, 10000), "star_intersections_7_s_5500.csv"),
-        (star_intersections_7, (6000, 10000), "star_intersections_7_s_6000.csv"),
-        (star_intersections_7, (6500, 10000), "star_intersections_7_s_6500.csv"),
-        (star_intersections_7, (7000, 10000), "star_intersections_7_s_7000.csv"),
-        (star_intersections_7, (7500, 10000), "star_intersections_7_s_7500.csv"),
+        #(star_intersections_7, (5500, 10000), "star_intersections_7_s_5500.csv"),
+        #(star_intersections_7, (6000, 10000), "star_intersections_7_s_6000.csv"),
+        #(star_intersections_7, (6500, 10000), "star_intersections_7_s_6500.csv"),
+        #(star_intersections_7, (7000, 10000), "star_intersections_7_s_7000.csv"),
+        #(star_intersections_7, (7500, 10000), "star_intersections_7_s_7500.csv"),
         # (star_intersections_7, (8000, 10000), "star_intersections_7_s_8000.csv"),
         # (star_intersections_7, (8500, 10000), "star_intersections_7_s_8500.csv"),
         # (star_intersections_7, (9000, 10000), "star_intersections_7_s_9000.csv"),
         # (star_intersections_7, (9500, 10000), "star_intersections_7_s_9500.csv"),
         # (star_intersections_7, (10000, 10000), "star_intersections_7_s_10000.csv"),
 
-        (star_intersections_8, (500, 10000), "star_intersections_8_s_500.csv"),
+        #(star_intersections_8, (500, 10000), "star_intersections_8_s_500.csv"),
         (star_intersections_8, (1000, 10000), "star_intersections_8_s_1000.csv"),
-        (star_intersections_8, (1500, 10000), "star_intersections_8_s_1500.csv"),
+        #(star_intersections_8, (1500, 10000), "star_intersections_8_s_1500.csv"),
         (star_intersections_8, (2000, 10000), "star_intersections_8_s_2000.csv"),
-        (star_intersections_8, (2500, 10000), "star_intersections_8_s_2500.csv"),
+        #(star_intersections_8, (2500, 10000), "star_intersections_8_s_2500.csv"),
         (star_intersections_8, (3000, 10000), "star_intersections_8_s_3000.csv"),
-        (star_intersections_8, (3500, 10000), "star_intersections_8_s_3500.csv"),
+        #(star_intersections_8, (3500, 10000), "star_intersections_8_s_3500.csv"),
         (star_intersections_8, (4000, 10000), "star_intersections_8_s_4000.csv"),
-        (star_intersections_8, (4500, 10000), "star_intersections_8_s_4500.csv"),
+        #(star_intersections_8, (4500, 10000), "star_intersections_8_s_4500.csv"),
         (star_intersections_8, (5000, 10000), "star_intersections_8_s_5000.csv"),
-        (star_intersections_8, (5500, 10000), "star_intersections_8_s_5500.csv"),
-        (star_intersections_8, (6000, 10000), "star_intersections_8_s_6000.csv"),
-        (star_intersections_8, (6500, 10000), "star_intersections_8_s_6500.csv"),
-        (star_intersections_8, (7000, 10000), "star_intersections_8_s_7000.csv"),
-        (star_intersections_8, (7500, 10000), "star_intersections_8_s_7500.csv"),
+        #(star_intersections_8, (5500, 10000), "star_intersections_8_s_5500.csv"),
+        #(star_intersections_8, (6000, 10000), "star_intersections_8_s_6000.csv"),
+        #(star_intersections_8, (6500, 10000), "star_intersections_8_s_6500.csv"),
+        #(star_intersections_8, (7000, 10000), "star_intersections_8_s_7000.csv"),
+        #(star_intersections_8, (7500, 10000), "star_intersections_8_s_7500.csv"),
         # (star_intersections_8, (8000, 10000), "star_intersections_8_s_8000.csv"),
         # (star_intersections_8, (8500, 10000), "star_intersections_8_s_8500.csv"),
         # (star_intersections_8, (9000, 10000), "star_intersections_8_s_9000.csv"),
         # (star_intersections_8, (9500, 10000), "star_intersections_8_s_9500.csv"),
         # (star_intersections_8, (10000, 10000), "star_intersections_8_s_10000.csv"),
-        
-        
-        
-        (star_intersections_4, (500, 1234567890), "star_intersections_4_m_500.csv"),
+
+        #(star_intersections_4, (500, 1234567890), "star_intersections_4_m_500.csv"),
         (star_intersections_4, (1000, 1234567890), "star_intersections_4_m_1000.csv"),
-        (star_intersections_4, (1500, 1234567890), "star_intersections_4_m_1500.csv"),
+        #(star_intersections_4, (1500, 1234567890), "star_intersections_4_m_1500.csv"),
         (star_intersections_4, (2000, 1234567890), "star_intersections_4_m_2000.csv"),
-        (star_intersections_4, (2500, 1234567890), "star_intersections_4_m_2500.csv"),
+        #(star_intersections_4, (2500, 1234567890), "star_intersections_4_m_2500.csv"),
         (star_intersections_4, (3000, 1234567890), "star_intersections_4_m_3000.csv"),
-        (star_intersections_4, (3500, 1234567890), "star_intersections_4_m_3500.csv"),
+        #(star_intersections_4, (3500, 1234567890), "star_intersections_4_m_3500.csv"),
         (star_intersections_4, (4000, 1234567890), "star_intersections_4_m_4000.csv"),
-        (star_intersections_4, (4500, 1234567890), "star_intersections_4_m_4500.csv"),
+        #(star_intersections_4, (4500, 1234567890), "star_intersections_4_m_4500.csv"),
         (star_intersections_4, (5000, 1234567890), "star_intersections_4_m_5000.csv"),
-        (star_intersections_4, (5500, 1234567890), "star_intersections_4_m_5500.csv"),
-        (star_intersections_4, (6000, 1234567890), "star_intersections_4_m_6000.csv"),
-        (star_intersections_4, (6500, 1234567890), "star_intersections_4_m_6500.csv"),
-        (star_intersections_4, (7000, 1234567890), "star_intersections_4_m_7000.csv"),
-        (star_intersections_4, (7500, 1234567890), "star_intersections_4_m_7500.csv"),
+        #(star_intersections_4, (5500, 1234567890), "star_intersections_4_m_5500.csv"),
+        #(star_intersections_4, (6000, 1234567890), "star_intersections_4_m_6000.csv"),
+        #(star_intersections_4, (6500, 1234567890), "star_intersections_4_m_6500.csv"),
+        #(star_intersections_4, (7000, 1234567890), "star_intersections_4_m_7000.csv"),
+        #(star_intersections_4, (7500, 1234567890), "star_intersections_4_m_7500.csv"),
         # (star_intersections_4, (8000, 1234567890), "star_intersections_4_m_8000.csv"),
         # (star_intersections_4, (8500, 1234567890), "star_intersections_4_m_8500.csv"),
         # (star_intersections_4, (9000, 1234567890), "star_intersections_4_m_9000.csv"),
         # (star_intersections_4, (9500, 1234567890), "star_intersections_4_m_9500.csv"),
         # (star_intersections_4, (10000, 1234567890), "star_intersections_4_m_10000.csv"),
 
-        (star_intersections_6, (500, 1234567890), "star_intersections_6_m_500.csv"),
+        #(star_intersections_6, (500, 1234567890), "star_intersections_6_m_500.csv"),
         (star_intersections_6, (1000, 1234567890), "star_intersections_6_m_1000.csv"),
-        (star_intersections_6, (1500, 1234567890), "star_intersections_6_m_1500.csv"),
+        #(star_intersections_6, (1500, 1234567890), "star_intersections_6_m_1500.csv"),
         (star_intersections_6, (2000, 1234567890), "star_intersections_6_m_2000.csv"),
-        (star_intersections_6, (2500, 1234567890), "star_intersections_6_m_2500.csv"),
+        #(star_intersections_6, (2500, 1234567890), "star_intersections_6_m_2500.csv"),
         (star_intersections_6, (3000, 1234567890), "star_intersections_6_m_3000.csv"),
-        (star_intersections_6, (3500, 1234567890), "star_intersections_6_m_3500.csv"),
+        #(star_intersections_6, (3500, 1234567890), "star_intersections_6_m_3500.csv"),
         (star_intersections_6, (4000, 1234567890), "star_intersections_6_m_4000.csv"),
-        (star_intersections_6, (4500, 1234567890), "star_intersections_6_m_4500.csv"),
+        #(star_intersections_6, (4500, 1234567890), "star_intersections_6_m_4500.csv"),
         (star_intersections_6, (5000, 1234567890), "star_intersections_6_m_5000.csv"),
-        (star_intersections_6, (5500, 1234567890), "star_intersections_6_m_5500.csv"),
-        (star_intersections_6, (6000, 1234567890), "star_intersections_6_m_6000.csv"),
-        (star_intersections_6, (6500, 1234567890), "star_intersections_6_m_6500.csv"),
-        (star_intersections_6, (7000, 1234567890), "star_intersections_6_m_7000.csv"),
-        (star_intersections_6, (7500, 1234567890), "star_intersections_6_m_7500.csv"),
+        #(star_intersections_6, (5500, 1234567890), "star_intersections_6_m_5500.csv"),
+        #(star_intersections_6, (6000, 1234567890), "star_intersections_6_m_6000.csv"),
+        #(star_intersections_6, (6500, 1234567890), "star_intersections_6_m_6500.csv"),
+        #(star_intersections_6, (7000, 1234567890), "star_intersections_6_m_7000.csv"),
+        #(star_intersections_6, (7500, 1234567890), "star_intersections_6_m_7500.csv"),
         # (star_intersections_6, (8000, 1234567890), "star_intersections_6_m_8000.csv"),
         # (star_intersections_6, (8500, 1234567890), "star_intersections_6_m_8500.csv"),
         # (star_intersections_6, (9000, 1234567890), "star_intersections_6_m_9000.csv"),
         # (star_intersections_6, (9500, 1234567890), "star_intersections_6_m_9500.csv"),
         # (star_intersections_6, (10000, 1234567890), "star_intersections_6_m_10000.csv"),
 
-        (star_intersections_7, (500, 1234567890), "star_intersections_7_m_500.csv"),
+        #(star_intersections_7, (500, 1234567890), "star_intersections_7_m_500.csv"),
         (star_intersections_7, (1000, 1234567890), "star_intersections_7_m_1000.csv"),
-        (star_intersections_7, (1500, 1234567890), "star_intersections_7_m_1500.csv"),
+        #(star_intersections_7, (1500, 1234567890), "star_intersections_7_m_1500.csv"),
         (star_intersections_7, (2000, 1234567890), "star_intersections_7_m_2000.csv"),
-        (star_intersections_7, (2500, 1234567890), "star_intersections_7_m_2500.csv"),
+        #(star_intersections_7, (2500, 1234567890), "star_intersections_7_m_2500.csv"),
         (star_intersections_7, (3000, 1234567890), "star_intersections_7_m_3000.csv"),
-        (star_intersections_7, (3500, 1234567890), "star_intersections_7_m_3500.csv"),
+        #(star_intersections_7, (3500, 1234567890), "star_intersections_7_m_3500.csv"),
         (star_intersections_7, (4000, 1234567890), "star_intersections_7_m_4000.csv"),
-        (star_intersections_7, (4500, 1234567890), "star_intersections_7_m_4500.csv"),
+        #(star_intersections_7, (4500, 1234567890), "star_intersections_7_m_4500.csv"),
         (star_intersections_7, (5000, 1234567890), "star_intersections_7_m_5000.csv"),
-        (star_intersections_7, (5500, 1234567890), "star_intersections_7_m_5500.csv"),
-        (star_intersections_7, (6000, 1234567890), "star_intersections_7_m_6000.csv"),
-        (star_intersections_7, (6500, 1234567890), "star_intersections_7_m_6500.csv"),
-        (star_intersections_7, (7000, 1234567890), "star_intersections_7_m_7000.csv"),
-        (star_intersections_7, (7500, 1234567890), "star_intersections_7_m_7500.csv"),
+        #(star_intersections_7, (5500, 1234567890), "star_intersections_7_m_5500.csv"),
+        #(star_intersections_7, (6000, 1234567890), "star_intersections_7_m_6000.csv"),
+        #(star_intersections_7, (6500, 1234567890), "star_intersections_7_m_6500.csv"),
+        #(star_intersections_7, (7000, 1234567890), "star_intersections_7_m_7000.csv"),
+        #(star_intersections_7, (7500, 1234567890), "star_intersections_7_m_7500.csv"),
         # (star_intersections_7, (8000, 1234567890), "star_intersections_7_m_8000.csv"),
         # (star_intersections_7, (8500, 1234567890), "star_intersections_7_m_8500.csv"),
         # (star_intersections_7, (9000, 1234567890), "star_intersections_7_m_9000.csv"),
         # (star_intersections_7, (9500, 1234567890), "star_intersections_7_m_9500.csv"),
         # (star_intersections_7, (10000, 1234567890), "star_intersections_7_m_10000.csv"),
 
-        (star_intersections_8, (500, 1234567890), "star_intersections_8_m_500.csv"),
+        #(star_intersections_8, (500, 1234567890), "star_intersections_8_m_500.csv"),
         (star_intersections_8, (1000, 1234567890), "star_intersections_8_m_1000.csv"),
-        (star_intersections_8, (1500, 1234567890), "star_intersections_8_m_1500.csv"),
+        #(star_intersections_8, (1500, 1234567890), "star_intersections_8_m_1500.csv"),
         (star_intersections_8, (2000, 1234567890), "star_intersections_8_m_2000.csv"),
-        (star_intersections_8, (2500, 1234567890), "star_intersections_8_m_2500.csv"),
+        #(star_intersections_8, (2500, 1234567890), "star_intersections_8_m_2500.csv"),
         (star_intersections_8, (3000, 1234567890), "star_intersections_8_m_3000.csv"),
-        (star_intersections_8, (3500, 1234567890), "star_intersections_8_m_3500.csv"),
+        #(star_intersections_8, (3500, 1234567890), "star_intersections_8_m_3500.csv"),
         (star_intersections_8, (4000, 1234567890), "star_intersections_8_m_4000.csv"),
-        (star_intersections_8, (4500, 1234567890), "star_intersections_8_m_4500.csv"),
+        #(star_intersections_8, (4500, 1234567890), "star_intersections_8_m_4500.csv"),
         (star_intersections_8, (5000, 1234567890), "star_intersections_8_m_5000.csv"),
-        (star_intersections_8, (5500, 1234567890), "star_intersections_8_m_5500.csv"),
-        (star_intersections_8, (6000, 1234567890), "star_intersections_8_m_6000.csv"),
-        (star_intersections_8, (6500, 1234567890), "star_intersections_8_m_6500.csv"),
-        (star_intersections_8, (7000, 1234567890), "star_intersections_8_m_7000.csv"),
-        (star_intersections_8, (7500, 1234567890), "star_intersections_8_m_7500.csv"),
+        #(star_intersections_8, (5500, 1234567890), "star_intersections_8_m_5500.csv"),
+        #(star_intersections_8, (6000, 1234567890), "star_intersections_8_m_6000.csv"),
+        #(star_intersections_8, (6500, 1234567890), "star_intersections_8_m_6500.csv"),
+        #(star_intersections_8, (7000, 1234567890), "star_intersections_8_m_7000.csv"),
+        #(star_intersections_8, (7500, 1234567890), "star_intersections_8_m_7500.csv"),
         # (star_intersections_8, (8000, 1234567890), "star_intersections_8_m_8000.csv"),
         # (star_intersections_8, (8500, 1234567890), "star_intersections_8_m_8500.csv"),
         # (star_intersections_8, (9000, 1234567890), "star_intersections_8_m_9000.csv"),
         # (star_intersections_8, (9500, 1234567890), "star_intersections_8_m_9500.csv"),
         # (star_intersections_8, (10000, 1234567890), "star_intersections_8_m_10000.csv"),
-        
-        
-        (star_intersections_4, (500, 12345678901234567890), "star_intersections_4_l_500.csv"),
+
+        #(star_intersections_4, (500, 12345678901234567890), "star_intersections_4_l_500.csv"),
         (star_intersections_4, (1000, 12345678901234567890), "star_intersections_4_l_1000.csv"),
-        (star_intersections_4, (1500, 12345678901234567890), "star_intersections_4_l_1500.csv"),
+        #(star_intersections_4, (1500, 12345678901234567890), "star_intersections_4_l_1500.csv"),
         (star_intersections_4, (2000, 12345678901234567890), "star_intersections_4_l_2000.csv"),
-        (star_intersections_4, (2500, 12345678901234567890), "star_intersections_4_l_2500.csv"),
+        #(star_intersections_4, (2500, 12345678901234567890), "star_intersections_4_l_2500.csv"),
         (star_intersections_4, (3000, 12345678901234567890), "star_intersections_4_l_3000.csv"),
-        (star_intersections_4, (3500, 12345678901234567890), "star_intersections_4_l_3500.csv"),
+        #(star_intersections_4, (3500, 12345678901234567890), "star_intersections_4_l_3500.csv"),
         (star_intersections_4, (4000, 12345678901234567890), "star_intersections_4_l_4000.csv"),
-        (star_intersections_4, (4500, 12345678901234567890), "star_intersections_4_l_4500.csv"),
+        #(star_intersections_4, (4500, 12345678901234567890), "star_intersections_4_l_4500.csv"),
         (star_intersections_4, (5000, 12345678901234567890), "star_intersections_4_l_5000.csv"),
-        (star_intersections_4, (5500, 12345678901234567890), "star_intersections_4_l_5500.csv"),
-        (star_intersections_4, (6000, 12345678901234567890), "star_intersections_4_l_6000.csv"),
-        (star_intersections_4, (6500, 12345678901234567890), "star_intersections_4_l_6500.csv"),
-        (star_intersections_4, (7000, 12345678901234567890), "star_intersections_4_l_7000.csv"),
-        (star_intersections_4, (7500, 12345678901234567890), "star_intersections_4_l_7500.csv"),
+        #(star_intersections_4, (5500, 12345678901234567890), "star_intersections_4_l_5500.csv"),
+        #(star_intersections_4, (6000, 12345678901234567890), "star_intersections_4_l_6000.csv"),
+        #(star_intersections_4, (6500, 12345678901234567890), "star_intersections_4_l_6500.csv"),
+        #(star_intersections_4, (7000, 12345678901234567890), "star_intersections_4_l_7000.csv"),
+        #(star_intersections_4, (7500, 12345678901234567890), "star_intersections_4_l_7500.csv"),
         # (star_intersections_4, (8000, 12345678901234567890), "star_intersections_4_l_8000.csv"),
         # (star_intersections_4, (8500, 12345678901234567890), "star_intersections_4_l_8500.csv"),
         # (star_intersections_4, (9000, 12345678901234567890), "star_intersections_4_l_9000.csv"),
         # (star_intersections_4, (9500, 12345678901234567890), "star_intersections_4_l_9500.csv"),
         # (star_intersections_4, (10000, 12345678901234567890), "star_intersections_4_l_10000.csv"),
 
-        (star_intersections_6, (500, 12345678901234567890), "star_intersections_6_l_500.csv"),
+        #(star_intersections_6, (500, 12345678901234567890), "star_intersections_6_l_500.csv"),
         (star_intersections_6, (1000, 12345678901234567890), "star_intersections_6_l_1000.csv"),
-        (star_intersections_6, (1500, 12345678901234567890), "star_intersections_6_l_1500.csv"),
+        #(star_intersections_6, (1500, 12345678901234567890), "star_intersections_6_l_1500.csv"),
         (star_intersections_6, (2000, 12345678901234567890), "star_intersections_6_l_2000.csv"),
-        (star_intersections_6, (2500, 12345678901234567890), "star_intersections_6_l_2500.csv"),
+        #(star_intersections_6, (2500, 12345678901234567890), "star_intersections_6_l_2500.csv"),
         (star_intersections_6, (3000, 12345678901234567890), "star_intersections_6_l_3000.csv"),
-        (star_intersections_6, (3500, 12345678901234567890), "star_intersections_6_l_3500.csv"),
+        #(star_intersections_6, (3500, 12345678901234567890), "star_intersections_6_l_3500.csv"),
         (star_intersections_6, (4000, 12345678901234567890), "star_intersections_6_l_4000.csv"),
-        (star_intersections_6, (4500, 12345678901234567890), "star_intersections_6_l_4500.csv"),
+        #(star_intersections_6, (4500, 12345678901234567890), "star_intersections_6_l_4500.csv"),
         (star_intersections_6, (5000, 12345678901234567890), "star_intersections_6_l_5000.csv"),
-        (star_intersections_6, (5500, 12345678901234567890), "star_intersections_6_l_5500.csv"),
-        (star_intersections_6, (6000, 12345678901234567890), "star_intersections_6_l_6000.csv"),
-        (star_intersections_6, (6500, 12345678901234567890), "star_intersections_6_l_6500.csv"),
-        (star_intersections_6, (7000, 12345678901234567890), "star_intersections_6_l_7000.csv"),
-        (star_intersections_6, (7500, 12345678901234567890), "star_intersections_6_l_7500.csv"),
+        #(star_intersections_6, (5500, 12345678901234567890), "star_intersections_6_l_5500.csv"),
+        #(star_intersections_6, (6000, 12345678901234567890), "star_intersections_6_l_6000.csv"),
+        #(star_intersections_6, (6500, 12345678901234567890), "star_intersections_6_l_6500.csv"),
+        #(star_intersections_6, (7000, 12345678901234567890), "star_intersections_6_l_7000.csv"),
+        #(star_intersections_6, (7500, 12345678901234567890), "star_intersections_6_l_7500.csv"),
         # (star_intersections_6, (8000, 12345678901234567890), "star_intersections_6_l_8000.csv"),
         # (star_intersections_6, (8500, 12345678901234567890), "star_intersections_6_l_8500.csv"),
         # (star_intersections_6, (9000, 12345678901234567890), "star_intersections_6_l_9000.csv"),
         # (star_intersections_6, (9500, 12345678901234567890), "star_intersections_6_l_9500.csv"),
         # (star_intersections_6, (10000, 12345678901234567890), "star_intersections_6_l_10000.csv"),
 
-        (star_intersections_7, (500, 12345678901234567890), "star_intersections_7_l_500.csv"),
+        #(star_intersections_7, (500, 12345678901234567890), "star_intersections_7_l_500.csv"),
         (star_intersections_7, (1000, 12345678901234567890), "star_intersections_7_l_1000.csv"),
-        (star_intersections_7, (1500, 12345678901234567890), "star_intersections_7_l_1500.csv"),
+        #(star_intersections_7, (1500, 12345678901234567890), "star_intersections_7_l_1500.csv"),
         (star_intersections_7, (2000, 12345678901234567890), "star_intersections_7_l_2000.csv"),
-        (star_intersections_7, (2500, 12345678901234567890), "star_intersections_7_l_2500.csv"),
+        #(star_intersections_7, (2500, 12345678901234567890), "star_intersections_7_l_2500.csv"),
         (star_intersections_7, (3000, 12345678901234567890), "star_intersections_7_l_3000.csv"),
-        (star_intersections_7, (3500, 12345678901234567890), "star_intersections_7_l_3500.csv"),
+        #(star_intersections_7, (3500, 12345678901234567890), "star_intersections_7_l_3500.csv"),
         (star_intersections_7, (4000, 12345678901234567890), "star_intersections_7_l_4000.csv"),
-        (star_intersections_7, (4500, 12345678901234567890), "star_intersections_7_l_4500.csv"),
+        #(star_intersections_7, (4500, 12345678901234567890), "star_intersections_7_l_4500.csv"),
         (star_intersections_7, (5000, 12345678901234567890), "star_intersections_7_l_5000.csv"),
-        (star_intersections_7, (5500, 12345678901234567890), "star_intersections_7_l_5500.csv"),
-        (star_intersections_7, (6000, 12345678901234567890), "star_intersections_7_l_6000.csv"),
-        (star_intersections_7, (6500, 12345678901234567890), "star_intersections_7_l_6500.csv"),
-        (star_intersections_7, (7000, 12345678901234567890), "star_intersections_7_l_7000.csv"),
-        (star_intersections_7, (7500, 12345678901234567890), "star_intersections_7_l_7500.csv"),
+        #(star_intersections_7, (5500, 12345678901234567890), "star_intersections_7_l_5500.csv"),
+        #(star_intersections_7, (6000, 12345678901234567890), "star_intersections_7_l_6000.csv"),
+        #(star_intersections_7, (6500, 12345678901234567890), "star_intersections_7_l_6500.csv"),
+        #(star_intersections_7, (7000, 12345678901234567890), "star_intersections_7_l_7000.csv"),
+        #(star_intersections_7, (7500, 12345678901234567890), "star_intersections_7_l_7500.csv"),
         # (star_intersections_7, (8000, 12345678901234567890), "star_intersections_7_l_8000.csv"),
         # (star_intersections_7, (8500, 12345678901234567890), "star_intersections_7_l_8500.csv"),
         # (star_intersections_7, (9000, 12345678901234567890), "star_intersections_7_l_9000.csv"),
         # (star_intersections_7, (9500, 12345678901234567890), "star_intersections_7_l_9500.csv"),
         # (star_intersections_7, (10000, 12345678901234567890), "star_intersections_7_l_10000.csv"),
 
-        (star_intersections_8, (500, 12345678901234567890), "star_intersections_8_l_500.csv"),
+        #(star_intersections_8, (500, 12345678901234567890), "star_intersections_8_l_500.csv"),
         (star_intersections_8, (1000, 12345678901234567890), "star_intersections_8_l_1000.csv"),
-        (star_intersections_8, (1500, 12345678901234567890), "star_intersections_8_l_1500.csv"),
+        #(star_intersections_8, (1500, 12345678901234567890), "star_intersections_8_l_1500.csv"),
         (star_intersections_8, (2000, 12345678901234567890), "star_intersections_8_l_2000.csv"),
-        (star_intersections_8, (2500, 12345678901234567890), "star_intersections_8_l_2500.csv"),
+        #(star_intersections_8, (2500, 12345678901234567890), "star_intersections_8_l_2500.csv"),
         (star_intersections_8, (3000, 12345678901234567890), "star_intersections_8_l_3000.csv"),
-        (star_intersections_8, (3500, 12345678901234567890), "star_intersections_8_l_3500.csv"),
+        #(star_intersections_8, (3500, 12345678901234567890), "star_intersections_8_l_3500.csv"),
         (star_intersections_8, (4000, 12345678901234567890), "star_intersections_8_l_4000.csv"),
-        (star_intersections_8, (4500, 12345678901234567890), "star_intersections_8_l_4500.csv"),
+        #(star_intersections_8, (4500, 12345678901234567890), "star_intersections_8_l_4500.csv"),
         (star_intersections_8, (5000, 12345678901234567890), "star_intersections_8_l_5000.csv"),
-        (star_intersections_8, (5500, 12345678901234567890), "star_intersections_8_l_5500.csv"),
-        (star_intersections_8, (6000, 12345678901234567890), "star_intersections_8_l_6000.csv"),
-        (star_intersections_8, (6500, 12345678901234567890), "star_intersections_8_l_6500.csv"),
-        (star_intersections_8, (7000, 12345678901234567890), "star_intersections_8_l_7000.csv"),
-        (star_intersections_8, (7500, 12345678901234567890), "star_intersections_8_l_7500.csv"),
+        #(star_intersections_8, (5500, 12345678901234567890), "star_intersections_8_l_5500.csv"),
+        #(star_intersections_8, (6000, 12345678901234567890), "star_intersections_8_l_6000.csv"),
+        #(star_intersections_8, (6500, 12345678901234567890), "star_intersections_8_l_6500.csv"),
+        #(star_intersections_8, (7000, 12345678901234567890), "star_intersections_8_l_7000.csv"),
+        #(star_intersections_8, (7500, 12345678901234567890), "star_intersections_8_l_7500.csv"),
         # (star_intersections_8, (8000, 12345678901234567890), "star_intersections_8_l_8000.csv"),
         # (star_intersections_8, (8500, 12345678901234567890), "star_intersections_8_l_8500.csv"),
         # (star_intersections_8, (9000, 12345678901234567890), "star_intersections_8_l_9000.csv"),
@@ -1196,63 +1207,63 @@ def main():
         # (star_intersections_8, (10000, 12345678901234567890), "star_intersections_8_l_10000.csv"),
 
         # Random_x calls
-        #(random_x, (500, 10000), "random_s_500.csv"),
+        # (random_x, (500, 10000), "random_s_500.csv"),
         (random_x, (1000, 10000), "random_s_1000.csv"),
-        #(random_x, (1500, 10000), "random_s_1500.csv"),
+        # (random_x, (1500, 10000), "random_s_1500.csv"),
         (random_x, (2000, 10000), "random_s_2000.csv"),
-        #(random_x, (2500, 10000), "random_s_2500.csv"),
+        # (random_x, (2500, 10000), "random_s_2500.csv"),
         (random_x, (3000, 10000), "random_s_3000.csv"),
-        #(random_x, (3500, 10000), "random_s_3500.csv"),
+        # (random_x, (3500, 10000), "random_s_3500.csv"),
         (random_x, (4000, 10000), "random_s_4000.csv"),
-        #(random_x, (4500, 10000), "random_s_4500.csv"),
+        # (random_x, (4500, 10000), "random_s_4500.csv"),
         (random_x, (5000, 10000), "random_s_5000.csv"),
-        #(random_x, (5500, 10000), "random_s_5500.csv"),
-        #(random_x, (6000, 10000), "random_s_6000.csv"),
-        #(random_x, (6500, 10000), "random_s_6500.csv"),
-        #(random_x, (7000, 10000), "random_s_7000.csv"),
-        #(random_x, (7500, 10000), "random_s_7500.csv"),
+        # (random_x, (5500, 10000), "random_s_5500.csv"),
+        # (random_x, (6000, 10000), "random_s_6000.csv"),
+        # (random_x, (6500, 10000), "random_s_6500.csv"),
+        # (random_x, (7000, 10000), "random_s_7000.csv"),
+        # (random_x, (7500, 10000), "random_s_7500.csv"),
         # (random_x, (8000, 10000), "random_s_8000.csv"),
         # (random_x, (8500, 10000), "random_s_8500.csv"),
         # (random_x, (9000, 10000), "random_s_9000.csv"),
         # (random_x, (9500, 10000), "random_s_9500.csv"),
         # (random_x, (10000, 10000), "random_s_10000.csv"),
 
-        #(random_x, (500, 1234567890), "random_m_500.csv"),
+        # (random_x, (500, 1234567890), "random_m_500.csv"),
         (random_x, (1000, 1234567890), "random_m_1000.csv"),
-        #(random_x, (1500, 1234567890), "random_m_1500.csv"),
+        # (random_x, (1500, 1234567890), "random_m_1500.csv"),
         (random_x, (2000, 1234567890), "random_m_2000.csv"),
-        #(random_x, (2500, 1234567890), "random_m_2500.csv"),
+        # (random_x, (2500, 1234567890), "random_m_2500.csv"),
         (random_x, (3000, 1234567890), "random_m_3000.csv"),
-        #(random_x, (3500, 1234567890), "random_m_3500.csv"),
+        # (random_x, (3500, 1234567890), "random_m_3500.csv"),
         (random_x, (4000, 1234567890), "random_m_4000.csv"),
-        #(random_x, (4500, 1234567890), "random_m_4500.csv"),
+        # (random_x, (4500, 1234567890), "random_m_4500.csv"),
         (random_x, (5000, 1234567890), "random_m_5000.csv"),
-        #(random_x, (5500, 1234567890), "random_m_5500.csv"),
-        #(random_x, (6000, 1234567890), "random_m_6000.csv"),
-        #(random_x, (6500, 1234567890), "random_m_6500.csv"),
-        #(random_x, (7000, 1234567890), "random_m_7000.csv"),
-        #(random_x, (7500, 1234567890), "random_m_7500.csv"),
+        # (random_x, (5500, 1234567890), "random_m_5500.csv"),
+        # (random_x, (6000, 1234567890), "random_m_6000.csv"),
+        # (random_x, (6500, 1234567890), "random_m_6500.csv"),
+        # (random_x, (7000, 1234567890), "random_m_7000.csv"),
+        # (random_x, (7500, 1234567890), "random_m_7500.csv"),
         # (random_x, (8000, 1234567890), "random_m_8000.csv"),
         # (random_x, (8500, 1234567890), "random_m_8500.csv"),
         # (random_x, (9000, 1234567890), "random_m_9000.csv"),
         # (random_x, (9500, 1234567890), "random_m_9500.csv"),
         # (random_x, (10000, 1234567890), "random_m_10000.csv"),
 
-        #(random_x, (500, 12345678901234567890), "random_l_500.csv"),
+        # (random_x, (500, 12345678901234567890), "random_l_500.csv"),
         (random_x, (1000, 12345678901234567890), "random_l_1000.csv"),
-        #(random_x, (1500, 12345678901234567890), "random_l_1500.csv"),
+        # (random_x, (1500, 12345678901234567890), "random_l_1500.csv"),
         (random_x, (2000, 12345678901234567890), "random_l_2000.csv"),
-        #(random_x, (2500, 12345678901234567890), "random_l_2500.csv"),
+        # (random_x, (2500, 12345678901234567890), "random_l_2500.csv"),
         (random_x, (3000, 12345678901234567890), "random_l_3000.csv"),
-        #(random_x, (3500, 12345678901234567890), "random_l_3500.csv"),
+        # (random_x, (3500, 12345678901234567890), "random_l_3500.csv"),
         (random_x, (4000, 12345678901234567890), "random_l_4000.csv"),
-        #(random_x, (4500, 12345678901234567890), "random_l_4500.csv"),
+        # (random_x, (4500, 12345678901234567890), "random_l_4500.csv"),
         (random_x, (5000, 12345678901234567890), "random_l_5000.csv"),
-        #(random_x, (5500, 12345678901234567890), "random_l_5500.csv"),
-        #(random_x, (6000, 12345678901234567890), "random_l_6000.csv"),
-        #(random_x, (6500, 12345678901234567890), "random_l_6500.csv"),
-        #(random_x, (7000, 12345678901234567890), "random_l_7000.csv"),
-        #(random_x, (7500, 12345678901234567890), "random_l_7500.csv"),
+        # (random_x, (5500, 12345678901234567890), "random_l_5500.csv"),
+        # (random_x, (6000, 12345678901234567890), "random_l_6000.csv"),
+        # (random_x, (6500, 12345678901234567890), "random_l_6500.csv"),
+        # (random_x, (7000, 12345678901234567890), "random_l_7000.csv"),
+        # (random_x, (7500, 12345678901234567890), "random_l_7500.csv"),
         # (random_x, (8000, 12345678901234567890), "random_l_8000.csv"),
         # (random_x, (8500, 12345678901234567890), "random_l_8500.csv"),
         # (random_x, (9000, 12345678901234567890), "random_l_9000.csv"),
@@ -1260,21 +1271,21 @@ def main():
         # (random_x, (10000, 12345678901234567890), "random_l_10000.csv"),
 
         # Clustered_x calls
-        #(clustered_x, (500, 5000, 1), "clustered_s_1.csv"),
+        # (clustered_x, (500, 5000, 1), "clustered_s_1.csv"),
         (clustered_x, (1000, 10000, 1), "clustered_m_1.csv"),
-        #(clustered_x, (1500, 15000, 1), "clustered_l_1.csv"),
+        # (clustered_x, (1500, 15000, 1), "clustered_l_1.csv"),
         (clustered_x, (2000, 20000, 1), "clustered_xl_1.csv"),
-        #(clustered_x, (2500, 25000, 1), "clustered_xxl_1.csv"),
+        # (clustered_x, (2500, 25000, 1), "clustered_xxl_1.csv"),
         (clustered_x, (3000, 30000, 1), "clustered_xxxl_1.csv"),
-        #(clustered_x, (3500, 35000, 1), "clustered_xxxxl_1.csv"),
+        # (clustered_x, (3500, 35000, 1), "clustered_xxxxl_1.csv"),
         (clustered_x, (4000, 40000, 1), "clustered_xxxxxl_1.csv"),
-        #(clustered_x, (4500, 45000, 1), "clustered_xxxxxxl_1.csv"),
+        # (clustered_x, (4500, 45000, 1), "clustered_xxxxxxl_1.csv"),
         (clustered_x, (5000, 50000, 1), "clustered_xxxxxxxl_1.csv"),
-        #(clustered_x, (5500, 55000, 1), "clustered_xxxxxxxxl_1.csv"),
-        #(clustered_x, (6000, 60000, 1), "clustered_xxxxxxxxxl_1.csv"),
-        #(clustered_x, (6500, 65000, 1), "clustered_xxxxxxxxxxl_1.csv"),
-        #(clustered_x, (7000, 70000, 1), "clustered_xxxxxxxxxxxl_1.csv"),
-        #(clustered_x, (7500, 75000, 1), "clustered_xxxxxxxxxxxxl_1.csv"),
+        # (clustered_x, (5500, 55000, 1), "clustered_xxxxxxxxl_1.csv"),
+        # (clustered_x, (6000, 60000, 1), "clustered_xxxxxxxxxl_1.csv"),
+        # (clustered_x, (6500, 65000, 1), "clustered_xxxxxxxxxxl_1.csv"),
+        # (clustered_x, (7000, 70000, 1), "clustered_xxxxxxxxxxxl_1.csv"),
+        # (clustered_x, (7500, 75000, 1), "clustered_xxxxxxxxxxxxl_1.csv"),
         # (clustered_x, (8000, 80000, 1), "clustered_xxxxxxxxxxxxxl_1.csv"),
         # (clustered_x, (8500, 85000, 1), "clustered_xxxxxxxxxxxxxxxl_1.csv"),
         # (clustered_x, (9000, 90000, 1), "clustered_xxxxxxxxxxxxxxxxxl_1.csv"),
@@ -1348,42 +1359,42 @@ def main():
         # (clustered_x, (10000, 100000, 4), "clustered_xxxxxxxxxxxxxxxxxxxl_4.csv"),
 
         # Clustered_x calls
-        #(clustered_x, (500, 5000, 5), "clustered_s_5.csv"),
+        # (clustered_x, (500, 5000, 5), "clustered_s_5.csv"),
         (clustered_x, (1000, 10000, 5), "clustered_m_5.csv"),
-        #(clustered_x, (1500, 15000, 5), "clustered_l_5.csv"),
+        # (clustered_x, (1500, 15000, 5), "clustered_l_5.csv"),
         (clustered_x, (2000, 20000, 5), "clustered_xl_5.csv"),
-        #(clustered_x, (2500, 25000, 5), "clustered_xxl_5.csv"),
+        # (clustered_x, (2500, 25000, 5), "clustered_xxl_5.csv"),
         (clustered_x, (3000, 30000, 5), "clustered_xxxl_5.csv"),
-        #(clustered_x, (3500, 35000, 5), "clustered_xxxxl_5.csv"),
+        # (clustered_x, (3500, 35000, 5), "clustered_xxxxl_5.csv"),
         (clustered_x, (4000, 40000, 5), "clustered_xxxxxl_5.csv"),
-        #(clustered_x, (4500, 45000, 5), "clustered_xxxxxxl_5.csv"),
+        # (clustered_x, (4500, 45000, 5), "clustered_xxxxxxl_5.csv"),
         (clustered_x, (5000, 50000, 5), "clustered_xxxxxxxl_5.csv"),
-        #(clustered_x, (5500, 55000, 5), "clustered_xxxxxxxxl_5.csv"),
-        #(clustered_x, (6000, 60000, 5), "clustered_xxxxxxxxxl_5.csv"),
-        #(clustered_x, (6500, 65000, 5), "clustered_xxxxxxxxxxl_5.csv"),
-        #(clustered_x, (7000, 70000, 5), "clustered_xxxxxxxxxxxl_5.csv"),
-        #(clustered_x, (7500, 75000, 5), "clustered_xxxxxxxxxxxxl_5.csv"),
+        # (clustered_x, (5500, 55000, 5), "clustered_xxxxxxxxl_5.csv"),
+        # (clustered_x, (6000, 60000, 5), "clustered_xxxxxxxxxl_5.csv"),
+        # (clustered_x, (6500, 65000, 5), "clustered_xxxxxxxxxxl_5.csv"),
+        # (clustered_x, (7000, 70000, 5), "clustered_xxxxxxxxxxxl_5.csv"),
+        # (clustered_x, (7500, 75000, 5), "clustered_xxxxxxxxxxxxl_5.csv"),
         # (clustered_x, (8000, 80000, 5), "clustered_xxxxxxxxxxxxxl_5.csv"),
         # (clustered_x, (8500, 85000, 5), "clustered_xxxxxxxxxxxxxxxl_5.csv"),
         # (clustered_x, (9000, 90000, 5), "clustered_xxxxxxxxxxxxxxxxxl_5.csv"),
         # (clustered_x, (9500, 95000, 5), "clustered_xxxxxxxxxxxxxxxxxxl_5.csv"),
         # (clustered_x, (10000, 100000, 5), "clustered_xxxxxxxxxxxxxxxxxxxl_5.csv"),
 
-        #(clustered_x, (500, 5000, 10), "clustered_s_10.csv"),
+        # (clustered_x, (500, 5000, 10), "clustered_s_10.csv"),
         (clustered_x, (1000, 10000, 10), "clustered_m_10.csv"),
-        #(clustered_x, (1500, 15000, 10), "clustered_l_10.csv"),
+        # (clustered_x, (1500, 15000, 10), "clustered_l_10.csv"),
         (clustered_x, (2000, 20000, 10), "clustered_xl_10.csv"),
-        #(clustered_x, (2500, 25000, 10), "clustered_xxl_10.csv"),
+        # (clustered_x, (2500, 25000, 10), "clustered_xxl_10.csv"),
         (clustered_x, (3000, 30000, 10), "clustered_xxxl_10.csv"),
-        #(clustered_x, (3500, 35000, 10), "clustered_xxxxl_10.csv"),
+        # (clustered_x, (3500, 35000, 10), "clustered_xxxxl_10.csv"),
         (clustered_x, (4000, 40000, 10), "clustered_xxxxxl_10.csv"),
-        #(clustered_x, (4500, 45000, 10), "clustered_xxxxxxl_10.csv"),
+        # (clustered_x, (4500, 45000, 10), "clustered_xxxxxxl_10.csv"),
         (clustered_x, (5000, 50000, 10), "clustered_xxxxxxxl_10.csv"),
-        #(clustered_x, (5500, 55000, 10), "clustered_xxxxxxxxl_10.csv"),
-        #(clustered_x, (6000, 60000, 10), "clustered_xxxxxxxxxl_10.csv"),
-        #(clustered_x, (6500, 65000, 10), "clustered_xxxxxxxxxxl_10.csv"),
-        #(clustered_x, (7000, 70000, 10), "clustered_xxxxxxxxxxxl_10.csv"),
-        #(clustered_x, (7500, 75000, 10), "clustered_xxxxxxxxxxxxl_10.csv"),
+        # (clustered_x, (5500, 55000, 10), "clustered_xxxxxxxxl_10.csv"),
+        # (clustered_x, (6000, 60000, 10), "clustered_xxxxxxxxxl_10.csv"),
+        # (clustered_x, (6500, 65000, 10), "clustered_xxxxxxxxxxl_10.csv"),
+        # (clustered_x, (7000, 70000, 10), "clustered_xxxxxxxxxxxl_10.csv"),
+        # (clustered_x, (7500, 75000, 10), "clustered_xxxxxxxxxxxxl_10.csv"),
         # (clustered_x, (8000, 80000, 10), "clustered_xxxxxxxxxxxxxl_10.csv"),
         # (clustered_x, (8500, 85000, 10), "clustered_xxxxxxxxxxxxxxxl_10.csv"),
         # (clustered_x, (9000, 90000, 10), "clustered_xxxxxxxxxxxxxxxxxl_10.csv"),
@@ -1475,42 +1486,42 @@ def main():
         # (rounding, (9500, 10000, 10000), "rounding_s_9500.csv"),
         # (rounding, (10000, 10000, 10000), "rounding_s_10000.csv"),
 
-        (rounding, (500, 1234567890, 10000), "rounding_m_500.csv"),
+        #(rounding, (500, 1234567890, 10000), "rounding_m_500.csv"),
         (rounding, (1000, 1234567890, 10000), "rounding_m_1000.csv"),
-        (rounding, (1500, 1234567890, 10000), "rounding_m_1500.csv"),
+        #(rounding, (1500, 1234567890, 10000), "rounding_m_1500.csv"),
         (rounding, (2000, 1234567890, 10000), "rounding_m_2000.csv"),
-        (rounding, (2500, 1234567890, 10000), "rounding_m_2500.csv"),
+        #(rounding, (2500, 1234567890, 10000), "rounding_m_2500.csv"),
         (rounding, (3000, 1234567890, 10000), "rounding_m_3000.csv"),
-        (rounding, (3500, 1234567890, 10000), "rounding_m_3500.csv"),
+        #(rounding, (3500, 1234567890, 10000), "rounding_m_3500.csv"),
         (rounding, (4000, 1234567890, 10000), "rounding_m_4000.csv"),
-        (rounding, (4500, 1234567890, 10000), "rounding_m_4500.csv"),
+        #(rounding, (4500, 1234567890, 10000), "rounding_m_4500.csv"),
         (rounding, (5000, 1234567890, 10000), "rounding_m_5000.csv"),
-        (rounding, (5500, 1234567890, 10000), "rounding_m_5500.csv"),
-        (rounding, (6000, 1234567890, 10000), "rounding_m_6000.csv"),
-        (rounding, (6500, 1234567890, 10000), "rounding_m_6500.csv"),
-        (rounding, (7000, 1234567890, 10000), "rounding_m_7000.csv"),
-        (rounding, (7500, 1234567890, 10000), "rounding_m_7500.csv"),
+        #(rounding, (5500, 1234567890, 10000), "rounding_m_5500.csv"),
+        #(rounding, (6000, 1234567890, 10000), "rounding_m_6000.csv"),
+        #(rounding, (6500, 1234567890, 10000), "rounding_m_6500.csv"),
+        #(rounding, (7000, 1234567890, 10000), "rounding_m_7000.csv"),
+        #(rounding, (7500, 1234567890, 10000), "rounding_m_7500.csv"),
         # (rounding, (8000, 1234567890, 10000), "rounding_m_8000.csv"),
         # (rounding, (8500, 1234567890, 10000), "rounding_m_8500.csv"),
         # (rounding, (9000, 1234567890, 10000), "rounding_m_9000.csv"),
         # (rounding, (9500, 1234567890, 10000), "rounding_m_9500.csv"),
         # (rounding, (10000, 1234567890, 10000), "rounding_m_10000.csv"),
 
-        (rounding, (500, 12345678901234567890, 10000), "rounding_l_500.csv"),
+        #(rounding, (500, 12345678901234567890, 10000), "rounding_l_500.csv"),
         (rounding, (1000, 12345678901234567890, 10000), "rounding_l_1000.csv"),
-        (rounding, (1500, 12345678901234567890, 10000), "rounding_l_1500.csv"),
+        #(rounding, (1500, 12345678901234567890, 10000), "rounding_l_1500.csv"),
         (rounding, (2000, 12345678901234567890, 10000), "rounding_l_2000.csv"),
-        (rounding, (2500, 12345678901234567890, 10000), "rounding_l_2500.csv"),
+        #(rounding, (2500, 12345678901234567890, 10000), "rounding_l_2500.csv"),
         (rounding, (3000, 12345678901234567890, 10000), "rounding_l_3000.csv"),
-        (rounding, (3500, 12345678901234567890, 10000), "rounding_l_3500.csv"),
+        #(rounding, (3500, 12345678901234567890, 10000), "rounding_l_3500.csv"),
         (rounding, (4000, 12345678901234567890, 10000), "rounding_l_4000.csv"),
-        (rounding, (4500, 12345678901234567890, 10000), "rounding_l_4500.csv"),
+        #(rounding, (4500, 12345678901234567890, 10000), "rounding_l_4500.csv"),
         (rounding, (5000, 12345678901234567890, 10000), "rounding_l_5000.csv"),
-        (rounding, (5500, 12345678901234567890, 10000), "rounding_l_5500.csv"),
-        (rounding, (6000, 12345678901234567890, 10000), "rounding_l_6000.csv"),
-        (rounding, (6500, 12345678901234567890, 10000), "rounding_l_6500.csv"),
-        (rounding, (7000, 12345678901234567890, 10000), "rounding_l_7000.csv"),
-        (rounding, (7500, 12345678901234567890, 10000), "rounding_l_7500.csv"),
+        #(rounding, (5500, 12345678901234567890, 10000), "rounding_l_5500.csv"),
+        #(rounding, (6000, 12345678901234567890, 10000), "rounding_l_6000.csv"),
+        #(rounding, (6500, 12345678901234567890, 10000), "rounding_l_6500.csv"),
+        #(rounding, (7000, 12345678901234567890, 10000), "rounding_l_7000.csv"),
+        #(rounding, (7500, 12345678901234567890, 10000), "rounding_l_7500.csv"),
         # (rounding, (8000, 12345678901234567890, 10000), "rounding_l_8000.csv"),
         # (rounding, (8500, 12345678901234567890, 10000), "rounding_l_8500.csv"),
         # (rounding, (9000, 12345678901234567890, 10000), "rounding_l_9000.csv"),
@@ -1577,3 +1588,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     main()
+
