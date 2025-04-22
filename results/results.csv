@@ -21,7 +21,6 @@ File,Bo_d,Boost_d,Boost_r,Cgal_intersector_ud,Cgal_arrangement_ud,Cgal_intersect
 ./tests/1048000-1048000-1048000-1048000-1048000_random_l_3000.csv,Error,965085,965085,1054000,1048000,1054000,1048000,1048000,1048000,1048000,1048000,Error
 ./tests/4500-4481-4500-4483-4482_star_intersections_10_1500.csv,Error,4500,4500,7470,4485,7470,4485,4500,4500,4500,4485,Error
 ./tests/22500-22461-22500-22470-22462_star_intersections_10_7500.csv,Error,22500,22500,37446,22473,37446,22473,22500,22500,22500,22473,Error
-./tests/.DS_Store,Error,Error,Error,Error,Error,Error,Error,Error,Error,Error,Error,Error
 ./tests/0-0-0-0-0_parallel_and_collinear_13.csv,Error,0,0,Error,Error,Error,Error,0,0,0,0,Error
 ./tests/0-0-0-0-0_parallel_and_collinear_12.csv,Error,1,1,4,0,4,0,0,0,0,0,Error
 ./tests/500000-37977-500000-365559-46195_star_intersections_7_s_1000.csv,Error,210596,210770,122285,121285,122285,121285,122285,122285,Error,83644,Error
