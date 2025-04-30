@@ -1,38 +1,56 @@
+#include "utils.h"
+
 #include <boost/geometry.hpp>
-#include <boost/geometry/index/rtree.hpp>
 
 namespace bg = boost::geometry;
-namespace bgi = bg::index;
 
-namespace mp = boost::multiprecision;
-using Rational = mp::mpq_rational;
+#ifdef RATIONAL
 
-typedef bg::model::point<double, 2, bg::cs::cartesian> Boost_Point;
-typedef bg::model::linestring<Boost_Point> LineString;
-typedef std::pair<LineString, unsigned> Value;
+using Rational = boost::multiprecision::mpq_rational;
+using Boost_Point = bg::model::point<Rational, 2, bg::cs::cartesian>;
 
-#include "utils_boost.h"
+#	define PARSE(x) Rational(x)
 
-void process_line(const std::string& line) {
-    std::stringstream ss(line);
-    std::string token;
+#else // !RATIONAL
 
-    double x1, y1, x2, y2;
+using Boost_Point = bg::model::point<double, 2, bg::cs::cartesian>;
 
-    std::getline(ss, token, ';');
-    x1 = bitstring_to_double(token);
+#	define PARSE(x) bitstring_to_double(x)
 
-    std::getline(ss, token, ';');
-    y1 = bitstring_to_double(token);
+#endif
 
-    std::getline(ss, token, ';');
-    x2 = bitstring_to_double(token);
+using LineString = bg::model::linestring<Boost_Point>;
 
-    std::getline(ss, token, ';');
-    y2 = bitstring_to_double(token);
+std::vector<LineString> boost_segments;
 
-    LineString lineString;
-    bg::append(lineString, Boost_Point(x1, y1));
-    bg::append(lineString, Boost_Point(y2, y2));
-    boost_segments.push_back(lineString);
+void process_line(const std::string& x1, const std::string& y1, const std::string& x2,
+		const std::string& y2) {
+	LineString lineString;
+	bg::append(lineString, Boost_Point(PARSE(x1), PARSE(y1)));
+	bg::append(lineString, Boost_Point(PARSE(y2), PARSE(y2)));
+	boost_segments.push_back(lineString);
 }
+
+template<bool print>
+size_t compute_crossings() {
+	size_t num_crossings = 0;
+
+	std::deque<Boost_Point> output_points;
+	for (size_t i = 0; i < boost_segments.size(); ++i) {
+		for (size_t j = i + 1; j < boost_segments.size(); ++j) {
+			output_points.clear();
+			bg::intersection(boost_segments[i], boost_segments[j], output_points);
+			num_crossings += output_points.size();
+
+			if (print) {
+				for (const auto& point : output_points) {
+					print_point(bg::get<0>(point), bg::get<1>(point));
+				}
+			}
+		}
+	}
+
+	return num_crossings;
+}
+
+#include "main.hpp"

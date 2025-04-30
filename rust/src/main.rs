@@ -1,20 +1,16 @@
-use geo::{Line, LineIntersection};
 use geo::sweep::Intersections;
+use geo::{Line, LineIntersection};
 use std::iter::FromIterator;
 
-use std::env;
-use std::fs::File;
-use std::error::Error;
-use std::time::Instant;
 use csv::ReaderBuilder;
-use std::io::BufReader;
 use psutil::process::Process;
+use std::env;
+use std::error::Error;
+use std::fs::File;
+use std::io::BufReader;
+use std::time::Instant;
 
-use log::{warn, info};
 use env_logger;
-
-use std::str::FromStr;
-use std::num::ParseFloatError;
 
 fn main() {
     env::set_var("RUST_LOG", "trace");
@@ -55,7 +51,10 @@ fn main() {
         println!("p_x;p_y");
         for (line1, line2, intersection) in iter {
             match intersection {
-                LineIntersection::SinglePoint { intersection, is_proper } => {
+                LineIntersection::SinglePoint {
+                    intersection,
+                    is_proper,
+                } => {
                     println!(
                         "{};{}",
                         float_to_binary(intersection.x),
@@ -72,7 +71,7 @@ fn main() {
                         line2.end.x, line2.end.y
                     );
                      */
-                },
+                }
                 LineIntersection::Collinear { intersection: line } => {
                     println!(
                         "{};{}",
@@ -84,7 +83,7 @@ fn main() {
                         float_to_binary(line.end.x),
                         float_to_binary(line.end.y)
                     );
-                },
+                }
             }
         }
     } else {
@@ -92,12 +91,12 @@ fn main() {
 
         for (line1, line2, intersection) in iter {
             match intersection {
-                LineIntersection::SinglePoint { intersection, is_proper } => {
+                LineIntersection::SinglePoint { .. } => {
                     count += 1;
-                },
-                LineIntersection::Collinear { intersection: line } => {
+                }
+                LineIntersection::Collinear { .. } => {
                     count += 2;
-                },
+                }
             }
         }
 
