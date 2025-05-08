@@ -56,7 +56,7 @@ size_t compute_crossings() {
 	leda::ALGO(segments, check_intersection);
 #elif defined(ALGO_GRAPH)
 	GRAPH<POINT, SEGMENT> G;
-	leda::ALGO(segments, G);
+	leda::ALGO(segments, G, false);
 	node v;
 	forall_nodes(v, G) if (G.degree(v) > 1) intersection_points.append(G[v]);
 #else
