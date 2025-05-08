@@ -45,18 +45,36 @@ EPECK = Exact_predicates_exact_constructions_kernel
 - from Open Street Map
 - from Graph Drawings
 - from Test Suites?
+- from GD Contest
 
-# ToDo
+# Notes
 
-- unique intersection points?
-- CGAL inexact (double) kernel 
-- Rust Geo Examples / Test Cases:
+- unique intersection points? => `uniq`
+- LEDA: no overlapping segments with double
+- CGAL Curve Sweep [no]
+
+# Meeting 08.05.
+
+- (NF) Docker Container + Repro Script
+  - Tests laufen lassen
+- (NA) Open Street Map Test Data
+  - Real-world test data from Open Street Map (randomize segment length by 90%-110% to get proper intersections)
+  - (NF) send python script
+- (NF) Grap Drawing Test Data (GD Contest)
+- (MS) LEDA Test Daten 
+  - star intersection vergleich
+- (MS) LEDA Tester checken 
+- (NF) CGAL inexact (double) kernel
+- (NF) geos/JTS different indexers
+- (NA) Java JTS [done]
+- (NF) fix test_GEO [done]
+- (NA) Rust Geo Examples / Test Cases: [done]
   > Due to the limited precision of most float data-types, the calculated intersection point may be snapped to one of
   the end-points even though all the end-points of the two lines are distinct points. In such cases, this field is still
   set to `true`. Please refer test_case: `test_central_endpoint_heuristic_failure_1` for such an example.
-- Real-world test data from Open Street Map (randomize segment length by 90%-110% to get proper intersections)
-- Java JTS?
-- find critical python Decimal precision
-- leda/test/geo/d2_geo/segint_test.cpp CURVE_SWEEP?
-- fix test_GEO
-- LEDA: no overlapping segments with double?
+- (NF) find critical python Decimal precision
+- (MS) leda/test/geo/d2_geo/segint_test.cpp CURVE_SWEEP?
+- (NA) shuffle input file
+- (NA) rotate benchmark sets
+- (NF) robust reading links an Manu
+- (NA) integer test sets
