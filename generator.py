@@ -503,6 +503,32 @@ def star_intersections_9(num_segments: int, num_intersections: int, max_coord: f
     return segments
 
 
+def star_intersections_11(num_segments: int, max_coord: int):
+    segments = []
+    radius = max_coord // 2
+    center = Point(radius, radius)
+
+    directions = []
+
+    for i in range(num_segments):
+        dx = round(radius * (i * 2) / num_segments - radius)
+        dy = round((i % num_segments) * radius / num_segments - radius)
+        directions.append((dx, dy))
+
+    for dx, dy in directions:
+        end_x = center.x + dx
+        end_y = center.y + dy
+        end_point = Point(end_x, end_y)
+
+        if (center.x > end_point.x) or (center.x == end_point.x and
+center.y > end_point.y):
+            segments.append(Segment(end_point, center))
+        else:
+            segments.append(Segment(center, end_point))
+
+    return segments
+
+
 def multi_axis_1():
     segments = [Segment(Point(10, 10), Point(10, 90))]
 
@@ -616,6 +642,17 @@ def rounding(num_segments: int, max_coord_x=100.0, max_coord_y=100.0):
     return segments
 
 
+
+def rounding_y(num_segments: int, max_coord_x=100.0, max_coord_y=100.0):
+    segments = [Segment(Point((max_coord_x * 0.8), 0), Point((max_coord_y * 0.9), max_coord_y))]
+
+    y_positions = np.linspace(10, int(max_coord_y * 0.9), num_segments)
+    for y in y_positions:
+        segments.append(Segment(Point(5, y), Point(max_coord_x * 0.85, y)))
+
+    return segments
+
+
 def accuracy_1():
     return [Segment(Point(0, 0), Point(near_inf, 0)),
             Segment(Point(0, 0), Point(0, -near_inf))]
@@ -680,34 +717,54 @@ def generate_random_segment(max_coord):
     return Segment(p1, p2)
 
 
+def generate_random_point_int(max_coord=100):
+    # Choose random integers between 0 and max_coord inclusive
+    return Point(random.randint(0, max_coord), random.randint(0, max_coord))
+
+
+def generate_random_segment_int(max_coord):
+    p1 = generate_random_point_int(max_coord)
+    p2 = generate_random_point_int(max_coord)
+
+    # Ensure consistent ordering of the segment
+    if (p1.x > p2.x) or (p1.x == p2.x and p1.y > p2.y):
+        p1, p2 = p2, p1
+
+    return Segment(p1, p2)
+
+
 def find_intersection_r(seg1, seg2):
     """Calculate the intersection point(s) of two segments using Decimal."""
 
-    x1, y1 = Fraction(seg1.p1.x), Fraction(seg1.p1.y)
-    x2, y2 = Fraction(seg1.p2.x), Fraction(seg1.p2.y)
-    x3, y3 = Fraction(seg2.p1.x), Fraction(seg2.p1.y)
-    x4, y4 = Fraction(seg2.p2.x), Fraction(seg2.p2.y)
+    x1, y1 = seg1.p1.x, seg1.p1.y
+    x2, y2 = seg1.p2.x, seg1.p2.y
+    x3, y3 = seg2.p1.x, seg2.p1.y
+    x4, y4 = seg2.p2.x, seg2.p2.y
 
-    denominator = (x1 - x2) * (y4 - y3) - (y1 - y2) * (x4 - x3)
+    dx1 = x2 - x1
+    dx2 = x4 - x3
+    dy1 = y2 - y1
+    dy2 = y4 - y3
+    dx3 = x1 - x3
+    dy3 = y1 - y3
 
-    if denominator == 0:
-        if ((y2 - y1) * (x3 - x1) == (y3 - y1) * (x2 - x1)) and ((y4 - y3) * (x1 - x3) == (y1 - y3) * (x4 - x3)):
-            return find_collinear_intersections(seg1, seg2)
+    det = dx1 * dy2 - dx2 * dy1
+    det1 = dx1 * dy3 - dx3 * dy1
+    det2 = dx2 * dy3 - dx3 * dy2
+
+    if det == 0:
+        if det1 != 0.0 or det2 != 0.0:
+            return []
+
+        return find_collinear_intersections(seg1, seg2)
+
+    s = det1 / det
+    t = det2 / det
+
+    if 0.0 <= s <= 1.0 and 0.0 <= t <= 1.0:
+        return [Point(x1 + t * dx1, y1 + t * dy1)]
+    else:
         return []
-
-    num_x = (x4 - x2) * (y4 - y3) - (x4 - x3) * (y4 - y2)
-    num_y = (x1 - x2) * (y4 - y2) - (x4 - x2) * (y1 - y2)
-
-    inter_x = num_x / denominator
-    inter_y = num_y / denominator
-
-    if inter_x < 0 or inter_x > 1:
-        return []
-
-    if inter_y < 0 or inter_y > 1:
-        return []
-
-    return [Point(x1 * inter_x * (x2 - x1), y1 * inter_x * (y2 - y1))]
 
 
 def find_intersection_d(seg1, seg2):
@@ -718,26 +775,30 @@ def find_intersection_d(seg1, seg2):
     x3, y3 = seg2.p1.x, seg2.p1.y
     x4, y4 = seg2.p2.x, seg2.p2.y
 
-    denominator = (x1 - x2) * (y4 - y3) - (y1 - y2) * (x4 - x3)
+    dx1 = x2 - x1
+    dx2 = x4 - x3
+    dy1 = y2 - y1
+    dy2 = y4 - y3
+    dx3 = x1 - x3
+    dy3 = y1 - y3
 
-    if denominator == 0:
-        if ((y2 - y1) * (x3 - x1) == (y3 - y1) * (x2 - x1)) and ((y4 - y3) * (x1 - x3) == (y1 - y3) * (x4 - x3)):
-            return find_collinear_intersections(seg1, seg2)
+    det = dx1 * dy2 - dx2 * dy1
+    det1 = dx1 * dy3 - dx3 * dy1
+    det2 = dx2 * dy3 - dx3 * dy2
+
+    if det == 0:
+        if det1 != 0.0 or det2 != 0.0:
+            return []
+
+        return find_collinear_intersections(seg1, seg2)
+
+    s = det1 / det
+    t = det2 / det
+
+    if 0.0 <= s <= 1.0 and 0.0 <= t <= 1.0:
+        return [Point(x1 + t * dx1, y1 + t * dy1)]
+    else:
         return []
-
-    num_x = (x4 - x2) * (y4 - y3) - (x4 - x3) * (y4 - y2)
-    num_y = (x1 - x2) * (y4 - y2) - (x4 - x2) * (y1 - y2)
-
-    inter_x = num_x / denominator
-    inter_y = num_y / denominator
-
-    if inter_x < 0 or inter_x > 1:
-        return []
-
-    if inter_y < 0 or inter_y > 1:
-        return []
-
-    return [Point(x1 * inter_x * (x2 - x1), y1 * inter_x * (y2 - y1))]
 
 
 def find_collinear_intersections(seg1, seg2):
