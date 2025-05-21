@@ -736,10 +736,10 @@ def generate_random_segment_int(max_coord):
 def find_intersection_r(seg1, seg2):
     """Calculate the intersection point(s) of two segments using Decimal."""
 
-    x1, y1 = seg1.p1.x, seg1.p1.y
-    x2, y2 = seg1.p2.x, seg1.p2.y
-    x3, y3 = seg2.p1.x, seg2.p1.y
-    x4, y4 = seg2.p2.x, seg2.p2.y
+    x1, y1 = Fraction(seg1.p1.x), Fraction(seg1.p1.y)
+    x2, y2 = Fraction(seg1.p2.x), Fraction(seg1.p2.y)
+    x3, y3 = Fraction(seg2.p1.x), Fraction(seg2.p1.y)
+    x4, y4 = Fraction(seg2.p2.x), Fraction(seg2.p2.y)
 
     dx1 = x2 - x1
     dx2 = x4 - x3
