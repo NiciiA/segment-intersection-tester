@@ -63,20 +63,29 @@ endfunction()
 
 add_test_executable(test_boost SUFFIX d DEFINES NUMBER_TYPE=Double LIBS ${Boost_LIBRARIES})
 add_test_executable(test_boost SUFFIX r DEFINES NUMBER_TYPE=Rational LIBS ${Boost_LIBRARIES})
+
 add_test_executable(test_cgal_arrangement LIBS ${CGAL_LIBRARIES})
 add_test_executable(test_cgal_intersector LIBS ${CGAL_LIBRARIES})
 add_test_executable(test_cgal_pairwise LIBS ${CGAL_LIBRARIES})
+
+add_test_executable(test_cgal_arrangement SUFFIX d DEFINES "CGAL_KERNEL=CGAL::Simple_cartesian<double>" LIBS ${CGAL_LIBRARIES})
+add_test_executable(test_cgal_intersector SUFFIX d DEFINES "CGAL_KERNEL=CGAL::Simple_cartesian<double>" LIBS ${CGAL_LIBRARIES})
+add_test_executable(test_cgal_pairwise SUFFIX d DEFINES "CGAL_KERNEL=CGAL::Simple_cartesian<double>" LIBS ${CGAL_LIBRARIES})
+
 add_test_executable(test_leda SUFFIX mm-d DEFINES ALGO=MULMULEY_SEGMENTS ALGO_GRAPH LIBS LEDA)
 add_test_executable(test_leda SUFFIX bo-d DEFINES ALGO=SWEEP_SEGMENTS ALGO_GRAPH LIBS LEDA)
-#add_test_executable(test_leda SUFFIX cs-d DEFINES ALGO=CURVE_SWEEP_SEGMENTS ALGO_GRAPH LIBS LEDA) only defined for rat
+#add_test_executable(test_leda SUFFIX cs-d DEFINES ALGO=CURVE_SWEEP_SEGMENTS ALGO_GRAPH LIBS LEDA) # only defined for rat
 add_test_executable(test_leda SUFFIX ba-d DEFINES ALGO=BALABAN_SEGMENTS ALGO_REPORT LIBS LEDA)
 add_test_executable(test_leda SUFFIX tr-d DEFINES ALGO=TRIVIAL_SEGMENTS ALGO_REPORT LIBS LEDA)
 add_test_executable(test_leda SUFFIX pw-d DEFINES LIBS LEDA)
+
 add_test_executable(test_leda SUFFIX mm-r DEFINES ALGO=MULMULEY_SEGMENTS ALGO_GRAPH RATIONAL LIBS LEDA)
 add_test_executable(test_leda SUFFIX bo-r DEFINES ALGO=SWEEP_SEGMENTS ALGO_GRAPH RATIONAL LIBS LEDA)
 add_test_executable(test_leda SUFFIX cs-r DEFINES ALGO=CURVE_SWEEP_SEGMENTS ALGO_GRAPH RATIONAL LIBS LEDA)
 add_test_executable(test_leda SUFFIX ba-r DEFINES ALGO=BALABAN_SEGMENTS ALGO_REPORT RATIONAL LIBS LEDA)
 add_test_executable(test_leda SUFFIX tr-r DEFINES ALGO=TRIVIAL_SEGMENTS ALGO_REPORT RATIONAL LIBS LEDA)
 add_test_executable(test_leda SUFFIX pw-r DEFINES RATIONAL LIBS LEDA)
+
 add_test_executable(test_ogdf LIBS OGDF)
 add_test_executable(test_geos LIBS GEOS::geos)
+add_test_executable(test_geos_custom LIBS GEOS::geos)

@@ -8,7 +8,7 @@
 #	include <LEDA/geo/rat_geo_alg.h>
 
 #	define PARSE(x) leda::rational(bitstring_to_double(x))
-#	define DUMP(x) x.to_double()
+#	define DUMP(x) x.to_double_precise()
 
 #else // !RATIONAL
 

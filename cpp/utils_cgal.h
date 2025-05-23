@@ -2,8 +2,12 @@
 
 #include "utils.h"
 
-#ifndef CGAL_KERNEL
+#include <CGAL/Simple_cartesian.h>
+#include <CGAL/Filtered_kernel.h>
+#include <CGAL/Lazy_exact_nt.h>
 #include <CGAL/Exact_predicates_exact_constructions_kernel.h>
+
+#ifndef CGAL_KERNEL
 #define CGAL_KERNEL CGAL::Exact_predicates_exact_constructions_kernel
 #endif
 

@@ -27,11 +27,12 @@ and the memory used for the computation in terms of difference in RSS before and
 | C++      | leda                      | SWEEP (BO)         | {double, leda rational}                       | U      |
 | C++      | leda                      | BALABAN            | {double, leda rational}                       | U      |
 | C++      | leda                      | TRIVIAL (pairwise) | {double, leda rational}                       | U      |
-| C++      | CGAL                      | intersector        | EPECK                                         | U      |
-| C++      | CGAL                      | arrangement        | EPECK                                         | U      |
-| C++      | CGAL                      | pairwise           | EPECK                                         | U      |
+| C++      | CGAL                      | intersector        | {Simple_cartesian<double>, EPECK}             | U      |
+| C++      | CGAL                      | arrangement        | {Simple_cartesian<double>, EPECK}             | U      |
+| C++      | CGAL                      | pairwise           | {Simple_cartesian<double>, EPECK}             | U      |
 | C++      | OGDF                      | BO                 | double                                        | U      |
-| C++      | geos                      | geos               | double                                        |        |
+| C++      | geos                      | SimpleNoder        | double                                        |        |
+| C++      | geos                      | MCIndexNoder       | double                                        |        |
 | Python   | manual                    | pairwise           | {Decimal 5 - 100, double, Fraction}           |        |
 | Python   | SweepIntersectorLib       | BO                 | double                                        | U      |
 | Rust     | geo::sweep::Intersections | BO                 | double                                        |        |
@@ -56,16 +57,18 @@ EPECK = Exact_predicates_exact_constructions_kernel
 # Meeting 08.05.
 
 - (NF) Docker Container + Repro Script
-  - Tests laufen lassen
+    - Tests laufen lassen
 - (NA) Open Street Map Test Data
-  - Real-world test data from Open Street Map (randomize segment length by 90%-110% to get proper intersections)
-  - (NF) send python script
-- (NF) Grap Drawing Test Data (GD Contest)
-- (MS) LEDA Test Daten 
-  - star intersection vergleich
-- (MS) LEDA Tester checken 
-- (NF) CGAL inexact (double) kernel
-- (NF) geos/JTS different indexers
+    - Real-world test data from Open Street Map (randomize segment length by 90%-110% to get proper intersections)
+    - (NF) send python script
+- (NF) Grap Drawing Test Data (GD Contest) [done]
+    - https://github.com/5gon12eder/msc-graphstudy/#graphs-graphscfg
+    - https://sparse.tamu.edu/about
+- (MS) LEDA Test Daten
+    - star intersection vergleich
+- (MS) LEDA Tester checken
+- (NF) CGAL inexact (double) kernel [done]
+- (NF) geos/JTS different indexers [done]
 - (NA) Java JTS [done]
 - (NF) fix test_GEO [done]
 - (NA) Rust Geo Examples / Test Cases: [done]
@@ -78,3 +81,16 @@ EPECK = Exact_predicates_exact_constructions_kernel
 - (NA) rotate benchmark sets
 - (NF) robust reading links an Manu
 - (NA) integer test sets
+- (NF) boost r-tree (GDA team 4)
+
+# Questions
+
+- ground truth: quadratic with rational - how many errors?
+- double: how many more errors through BO over quadratic-double?
+
+# ToDo
+
+- Merge Repos
+- Convert int coordinates to float-binary
+- Cluster Runner
+- Merge Data Sets (Nico, LEDA Test Data from Manu)
