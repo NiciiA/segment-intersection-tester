@@ -1,0 +1,27 @@
+import click
+from ogdf_python import *
+
+
+@click.command()
+@click.argument('file', type=click.Path(exists=True, dir_okay=False))
+def parse(file):
+    G = ogdf.Graph()
+    GA = ogdf.GraphAttributes(G, ogdf.GraphAttributes.all)
+    if file.endswith(".gz"):
+        import gzip, tempfile, shutil
+        with tempfile.NamedTemporaryFile(suffix=file.removesuffix(".gz").split("/")[-1]) as f_out:
+            with gzip.open(file, 'rb') as f_in:
+                shutil.copyfileobj(f_in, f_out)
+            # drop tsplib xml file type mapping
+            ogdf.GraphIO.getFileType("a.xml")
+            ogdf.GraphIO.FILE_TYPE_MAP.extract("xml")
+
+            ogdf.GraphIO.read(GA, G, f_out.name)
+    else:
+        ogdf.GraphIO.read(GA, G, file)
+    for e in G.edges:
+        print(";".join(map(str, (GA.x[e.source()], GA.y[e.source()], GA.x[e.target()], GA.y[e.target()]))))
+
+
+if __name__ == '__main__':
+    parse()
