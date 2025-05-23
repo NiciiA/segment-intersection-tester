@@ -1,8 +1,8 @@
-cmake_minimum_required(VERSION 3.30)
+cmake_minimum_required(VERSION 3.20)
 project(SegGen)
 set(CMAKE_CXX_STANDARD 20)
 
-cmake_policy(SET CMP0167 NEW) # use non-vendored findBoost
+#cmake_policy(SET CMP0167 NEW) # use non-vendored findBoost on too new CMake versions
 
 if(CMAKE_BUILD_TYPE MATCHES DEBUG)
     add_compile_options(-g -fno-omit-frame-pointer -fno-inline)

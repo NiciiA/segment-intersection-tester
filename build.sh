@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -x
-set -a
+set -e
 
 LEDA_VERSION=7.2
 
@@ -24,13 +24,15 @@ pushd adapters
   export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${LEDA_HOME}/lib"
 
   echo "LEDA environment (also stored in venv):"
-  echo "export LEDA_HOME=\"$LEDA_HOME\"" | tee -a .venv/bin/activate
-  echo 'export PATH="${PATH}:${LEDA_HOME}/bin"' | tee -a .venv/bin/activate
-  echo 'export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${LEDA_HOME}/lib"' | tee -a .venv/bin/activate
+  echo "export LEDA_HOME=\"$LEDA_HOME\"" | tee -a ../.venv/bin/activate
+  echo 'export PATH="${PATH}:${LEDA_HOME}/bin"' | tee -a ../.venv/bin/activate
+  echo 'export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${LEDA_HOME}/lib"' | tee -a ../.venv/bin/activate
 
   pushd deps/leda
-    ./lconfig g++ static # https://stackoverflow.com/a/11173897
-    ./build.sh # may need to change shebang to bash
+    ./lconfig g++ static
+    sed -i 's|#!/bin/sh|#!/bin/bash|' build.sh
+    /usr/bin/time echo || { echo "missing /usr/bin/time! try 'apt install time'"; exit 1 }
+    ./build.sh
   popd
 
   mkdir -p "deps/ogdf/build-release"
@@ -43,7 +45,7 @@ pushd adapters
   mkdir -p "cpp/build-release"
   pushd "cpp/build-release"
     cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=TRUE -DCMAKE_POLICY_DEFAULT_CMP0069=NEW -DBUILD_SHARED_LIBS=OFF \
-      -DOGDF_DIR=$(realpath "../../deps/ogdf/build-release") -DMPFR_LIBRARIES=/usr/lib64/libmpfr.so
+      -DOGDF_DIR=$(realpath "../../deps/ogdf/build-release") # -DMPFR_LIBRARIES=/usr/lib64/libmpfr.so # whereis libmpfr.so
     cmake --build . --target all -j $(nproc)
   popd
 

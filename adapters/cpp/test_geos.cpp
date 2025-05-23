@@ -2,11 +2,18 @@
 #include <geos/algorithm/LineIntersector.h>
 #include <geos/geom/Coordinate.h>
 #include <geos/geom/CoordinateSequence.h>
+#include <geos/geom/PrecisionModel.h>
 #include <geos/noding/BasicSegmentString.h>
 #include <geos/noding/MCIndexNoder.h>
-#include <geos/noding/IntersectionFinderAdder.h>
 #include <geos/noding/NodingIntersectionFinder.h>
 #include <geos/noding/SimpleNoder.h>
+#include <geos/version.h>
+
+
+#if GEOS_VERSION_MINOR < 12
+#	include <geos/geom/CoordinateArraySequence.h>
+#	define CoordinateSequence CoordinateArraySequence
+#endif
 
 using namespace geos::geom;
 using namespace geos::noding;

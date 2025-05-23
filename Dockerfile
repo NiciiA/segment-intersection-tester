@@ -22,4 +22,8 @@ RUN apt-get update && apt-get install -y \
     python3-venv \
     default-jre \
     default-jdk \
+    time \
+    ccache \
     && rm -rf /var/lib/apt/lists/*
+
+ENV PATH="/usr/lib/ccache:$PATH"
