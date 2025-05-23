@@ -1,3 +1,6 @@
-[submodule "ogdf"]
-	path = ogdf
+[submodule "adapters/deps/ogdf"]
+	path = adapters/deps/ogdf
 	url = https://github.com/ogdf/ogdf.git
+[submodule "adapters/deps/python_sweep_intersector"]
+	path = adapters/deps/python_sweep_intersector
+	url = https://github.com/prochitecture/sweep_intersector.git
