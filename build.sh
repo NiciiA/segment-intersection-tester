@@ -9,7 +9,7 @@ git submodule update --init --recursive
 
 python3 -m venv .venv
 source .venv/bin/activate
-# pip install -e tools/ # TODO!
+pip install -r generation/requirements.txt
 echo "Don't forget to run \`source .venv/bin/activate!\`"
 
 pushd adapters
