@@ -17,7 +17,7 @@ else()
     set(BUILD_SHARED_LIBS OFF)
 endif()
 
-find_package(OGDF REQUIRED)
+find_package(OGDF REQUIRED HINTS ${CMAKE_SOURCE_DIR}/../deps/ogdf/build-release)
 
 find_package(Boost REQUIRED COMPONENTS filesystem system)
 #target_include_directories(${Boost_INCLUDE_DIRS})
@@ -31,8 +31,8 @@ find_package(GEOS CONFIG REQUIRED)
 ########################################################################################################################
 
 add_library(LEDA STATIC IMPORTED)
-set_target_properties(LEDA PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/../leda/libleda.a)
-target_include_directories(LEDA INTERFACE ${CMAKE_SOURCE_DIR}/../leda/incl)
+set_target_properties(LEDA PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/../deps/leda/libleda.a)
+target_include_directories(LEDA INTERFACE ${CMAKE_SOURCE_DIR}/../deps/leda/incl)
 
 ########################################################################################################################
 
