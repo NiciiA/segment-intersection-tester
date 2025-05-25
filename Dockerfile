@@ -1,5 +1,5 @@
 # based on debian
-FROM rust:latest
+FROM rust:latest AS base
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -22,8 +22,16 @@ RUN apt-get update && apt-get install -y \
     python3-venv \
     default-jre \
     default-jdk \
+    maven \
     time \
     ccache \
     && rm -rf /var/lib/apt/lists/*
 
 ENV PATH="/usr/lib/ccache:$PATH"
+
+FROM base AS build
+WORKDIR /root
+RUN git clone https://github.com/NiciiA/segment-intersection-tester.git && \
+    cd segment-intersection-tester && \
+    chmod +x ./build.sh && \
+    ./build.sh

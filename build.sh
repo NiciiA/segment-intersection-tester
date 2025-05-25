@@ -9,7 +9,7 @@ git submodule update --init --recursive
 
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r generation/requirements.txt
+# pip install -r generation/requirements.txt
 echo "Don't forget to run \`source .venv/bin/activate!\`"
 
 pushd adapters
@@ -30,8 +30,8 @@ pushd adapters
 
   pushd deps/leda
     ./lconfig g++ static
-    sed -i 's|#!/bin/sh|#!/bin/bash|' build.sh
-    /usr/bin/time echo || { echo "missing /usr/bin/time! try 'apt install time'"; exit 1 }
+    sed -i 's|#!/bin/sh|#!/bin/bash|' ./build.sh
+    /usr/bin/time echo || { echo "missing /usr/bin/time! try 'apt install time'"; exit 1; }
     ./build.sh
   popd
 
@@ -47,6 +47,14 @@ pushd adapters
     cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=TRUE -DCMAKE_POLICY_DEFAULT_CMP0069=NEW -DBUILD_SHARED_LIBS=OFF \
       -DOGDF_DIR=$(realpath "../../deps/ogdf/build-release") # -DMPFR_LIBRARIES=/usr/lib64/libmpfr.so # whereis libmpfr.so
     cmake --build . --target all -j $(nproc)
+  popd
+
+  pushd "rust"
+    cargo build --profile release
+  popd
+
+  pushd "java"
+    mvn package
   popd
 
 popd # /adapters
