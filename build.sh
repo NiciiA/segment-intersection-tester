@@ -31,6 +31,7 @@ pushd adapters
   pushd deps/leda
     ./lconfig g++ static
     sed -i 's|#!/bin/sh|#!/bin/bash|' ./build.sh
+    sed -i 's|set -e|set -e; set -m|' ./build.sh
     /usr/bin/time echo || { echo "missing /usr/bin/time! try 'apt install time'"; exit 1; }
     ./build.sh
   popd
