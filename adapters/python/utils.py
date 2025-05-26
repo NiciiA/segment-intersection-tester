@@ -19,37 +19,38 @@ def get_memory_usage():
 
 # Function to calculate the intersection of two segments
 def find_intersection(seg1, seg2, epsilon=None):
-    # Use Decimal for all calculations
     x1, y1 = seg1.p1.x, seg1.p1.y
     x2, y2 = seg1.p2.x, seg1.p2.y
     x3, y3 = seg2.p1.x, seg2.p1.y
     x4, y4 = seg2.p2.x, seg2.p2.y
 
-    denominator = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
+    dx1 = x2 - x1
+    dx2 = x4 - x3
+    dy1 = y2 - y1
+    dy2 = y4 - y3
+    dx3 = x1 - x3
+    dy3 = y1 - y3
 
-    if denominator == 0:
-        if ((y2 - y1) * (x3 - x1) == (y3 - y1) * (x2 - x1)) and ((y4 - y3) * (x1 - x3) == (y1 - y3) * (x4 - x3)):
-            yield from find_collinear_intersections(seg1, seg2)
-        return
+    det = dx1 * dy2 - dx2 * dy1
+    det1 = dx1 * dy3 - dx3 * dy1
+    det2 = dx2 * dy3 - dx3 * dy2
 
-    num_x = ((x1 * y2 - y1 * x2) * (x3 - x4)) - ((x1 - x2) * (x3 * y4 - y3 * x4))
-    num_y = ((x1 * y2 - y1 * x2) * (y3 - y4)) - ((y1 - y2) * (x3 * y4 - y3 * x4))
+    if det == 0:
+        if det1 != 0.0 or det2 != 0.0:
+            return
 
-    inter_x = num_x / denominator
-    inter_y = num_y / denominator
+        yield from find_collinear_intersections(seg1, seg2)
+
+    s = det1 / det
+    t = det2 / det
+
 
     if epsilon:
-        if (min(x1, x2) - epsilon <= inter_x <= max(x1, x2) + epsilon) and \
-                (min(y1, y2) - epsilon <= inter_y <= max(y1, y2) + epsilon) and \
-                (min(x3, x4) - epsilon <= inter_x <= max(x3, x4) + epsilon) and \
-                (min(y3, y4) - epsilon <= inter_y <= max(y3, y4) + epsilon):
-            yield Point(float(inter_x), float(inter_y))
+        if 0.0 - epsilon <= s <= 1.0 + epsilon and 0.0 - epsilon <= t <= 1.0 + epsilon:
+            yield [Point(x1 + t * dx1, y1 + t * dy1)]
     else:
-        if (min(x1, x2) <= inter_x <= max(x1, x2)) and \
-                (min(y1, y2) <= inter_y <= max(y1, y2)) and \
-                (min(x3, x4) <= inter_x <= max(x3, x4)) and \
-                (min(y3, y4) <= inter_y <= max(y3, y4)):
-            yield Point(float(inter_x), float(inter_y))
+        if 0.0 <= s <= 1.0 and 0.0 <= t <= 1.0:
+            yield [Point(x1 + t * dx1, y1 + t * dy1)]
 
 
 # Function to find collinear intersections
