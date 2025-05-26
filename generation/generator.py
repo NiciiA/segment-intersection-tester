@@ -952,18 +952,19 @@ def plot_segments_and_intersections(segments, intersections):
 
 def process_configuration(func, params, filename):
     segments = func(*params)  # Call the function dynamically
-    intersections_d = calculate_intersections_d(segments)
-    intersections_r = calculate_intersections_r(segments)
-    intersections_q = calculate_intersections_q(intersections_r)
 
-    distinct_intersection_d = set(intersections_d)
-    distinct_intersection_r = set(intersections_r)
-    distinct_intersection_q = set(intersections_q)
-
-    save_segments_to_csv(segments, str(len(intersections_d)) + "-" + str(len(distinct_intersection_d)) + "-" + str(len(intersections_r)) + "-" + str(len(distinct_intersection_r)) + "-" + str(len(distinct_intersection_q)) + "_" + filename)
+    save_segments_to_csv(segments, filename)
 
     if filename.startswith(("accuracy_", "rounding_", "star_intersections_7_", "star_intersections_8_")): # "parallel_", "length_", "star_",
         # accuracies = accurate_intersections(segments)
+        intersections_d = calculate_intersections_d(segments)
+        intersections_r = calculate_intersections_r(segments)
+        #intersections_q = calculate_intersections_q(intersections_r)
+
+        #distinct_intersection_d = set(intersections_d)
+        #distinct_intersection_r = set(intersections_r)
+        #distinct_intersection_q = set(intersections_q)
+
         save_accuracy_to_csv(intersections_d, intersections_r, filename)
 
     print("done: " + filename)
