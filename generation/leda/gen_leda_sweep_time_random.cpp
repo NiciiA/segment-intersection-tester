@@ -36,8 +36,10 @@ int main(int argc, char* argv[])
         cerr << "Error: format must be 'integer' or 'double'" << endl;
         return 1;
     }
-    
+
     integer size = integer(1) << k;
+
+    cout << "x1;y1;x2;y2" << endl;
     
     for(int i = 0; i < N; i++) {
         integer x1 = integer::random(k) - size;
@@ -47,15 +49,15 @@ int main(int argc, char* argv[])
         
         if (format == "integer") {
             // Output exact integers as strings
-            cout << x1.to_string() << "," 
-                 << y1.to_string() << "," 
-                 << x2.to_string() << "," 
+            cout << x1.to_string() << ";" 
+                 << y1.to_string() << ";" 
+                 << x2.to_string() << ";" 
                  << y2.to_string() << endl;
         } else {
             // Convert to double first, identical to original's segment creation
-            cout << x1.to_double() << "," 
-                 << y1.to_double() << "," 
-                 << x2.to_double() << "," 
+            cout << x1.to_double() << ";" 
+                 << y1.to_double() << ";" 
+                 << x2.to_double() << ";" 
                  << y2.to_double() << endl;
         }
     }

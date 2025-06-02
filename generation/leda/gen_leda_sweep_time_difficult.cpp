@@ -42,7 +42,9 @@ int main(int argc, char* argv[])
     
     integer size = integer(1) << k;
     integer y = size;
-    integer d = (N <= 1 ? size : 2*size/(N-1));
+    integer d = (N <= 1 ? size : 2 * size / (N - 1));
+
+    cout << "x1;y1;x2;y2" << endl;
     
     for(int i = 0; i < N; i++) {
         // Identical generation logic as original DIFFI mode
@@ -56,15 +58,15 @@ int main(int argc, char* argv[])
         
         if (format == "integer") {
             // Output exact integers as strings
-            cout << x1.to_string() << "," 
-                 << y1.to_string() << "," 
-                 << x2.to_string() << "," 
+            cout << x1.to_string() << ";" 
+                 << y1.to_string() << ";" 
+                 << x2.to_string() << ";" 
                  << y2.to_string() << endl;
         } else {
             // Convert to double first, identical to original's segment creation
-            cout << x1.to_double() << "," 
-                 << y1.to_double() << "," 
-                 << x2.to_double() << "," 
+            cout << x1.to_double() << ";" 
+                 << y1.to_double() << ";" 
+                 << x2.to_double() << ";" 
                  << y2.to_double() << endl;
         }
     }
