@@ -20,22 +20,25 @@ and the memory used for the computation in terms of difference in RSS before and
 
 # Implementations
 
-| Language | Library                   | Method             | Number Type                                   | Unique |
-|----------|---------------------------|--------------------|-----------------------------------------------|--------|
-| C++      | boost                     | pairwise           | {double, boost::multiprecision::mpq_rational} |        |
-| C++      | leda                      | MULMULEY           | {double, leda rational}                       | U      |
-| C++      | leda                      | SWEEP (BO)         | {double, leda rational}                       | U      |
-| C++      | leda                      | BALABAN            | {double, leda rational}                       | U      |
-| C++      | leda                      | TRIVIAL (pairwise) | {double, leda rational}                       | U      |
-| C++      | CGAL                      | intersector        | {Simple_cartesian<double>, EPECK}             | U      |
-| C++      | CGAL                      | arrangement        | {Simple_cartesian<double>, EPECK}             | U      |
-| C++      | CGAL                      | pairwise           | {Simple_cartesian<double>, EPECK}             | U      |
-| C++      | OGDF                      | BO                 | double                                        | U      |
-| C++      | geos                      | SimpleNoder        | double                                        |        |
-| C++      | geos                      | MCIndexNoder       | double                                        |        |
-| Python   | manual                    | pairwise           | {Decimal 5 - 100, double, Fraction}           |        |
-| Python   | SweepIntersectorLib       | BO                 | double                                        | U      |
-| Rust     | geo::sweep::Intersections | BO                 | double                                        |        |
+| Language | Library                   | Method               | Number Type                                   | Unique |
+|----------|---------------------------|----------------------|-----------------------------------------------|--------|
+| C++      | boost                     | pairwise             | {double, boost::multiprecision::mpq_rational} |        |
+| C++      | leda                      | MULMULEY             | {double, leda rational}                       | U      |
+| C++      | leda                      | SWEEP (BO)           | {double, leda rational}                       | U      |
+| C++      | leda                      | BALABAN              | {double, leda rational}                       |        |
+| C++      | leda                      | TRIVIAL              | {double, leda rational}                       |        |
+| C++      | leda                      | CURVE_SWEEP_SEGMENTS | leda rational                                 | U      |
+| C++      | leda                      | pairwise             | {double, leda rational}                       |        |
+| C++      | CGAL                      | intersector          | {Simple_cartesian<double>, EPECK}             |        |
+| C++      | CGAL                      | arrangement          | {Simple_cartesian<double>, EPECK}             | U      |
+| C++      | CGAL                      | pairwise             | {Simple_cartesian<double>, EPECK}             |        |
+| C++      | OGDF                      | BO                   | double                                        | U      |
+| C++      | geos                      | SimpleNoder          | double                                        |        |
+| C++      | geos                      | MCIndexNoder         | double                                        |        |
+| Python   | manual                    | pairwise             | {Decimal 5 - 100, double, Fraction}           |        |
+| Python   | SweepIntersectorLib       | BO                   | double                                        | U      |
+| Rust     | geo::sweep::Intersections | BO                   | double                                        |        |
+| Java     | JTS                       | MCIndexNoder         | double                                        |        |
 
 EPECK = Exact_predicates_exact_constructions_kernel
 
@@ -90,7 +93,12 @@ EPECK = Exact_predicates_exact_constructions_kernel
 
 # ToDo
 
-- Merge Repos
-- Convert int coordinates to float-binary
-- Cluster Runner
+- rational inputs for adapters
+- compress files?
+- convert data sets
 - Merge Data Sets (Nico, LEDA Test Data from Manu)
+- Johannes:
+  - Cluster Runner
+  - Docker / Dependencies auf Cluster
+  - SLURM?
+  - Shared Folder
