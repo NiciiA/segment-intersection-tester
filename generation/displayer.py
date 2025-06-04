@@ -1,13 +1,9 @@
 import csv
 import itertools
-from decimal import Decimal, getcontext
 from collections import namedtuple
 import matplotlib.pyplot as plt
 import argparse
 import struct
-
-# Increase precision for Decimal calculations
-getcontext().prec = 100
 
 # Define Point and Segment structures
 Point = namedtuple('Point', 'x y')
@@ -23,30 +19,35 @@ def bin2float(binary_string, single=False):
 
 def find_intersection(seg1, seg2):
     """Calculate the intersection point(s) of two segments using Decimal."""
-    x1, y1 = Decimal(seg1.p1.x), Decimal(seg1.p1.y)
-    x2, y2 = Decimal(seg1.p2.x), Decimal(seg1.p2.y)
-    x3, y3 = Decimal(seg2.p1.x), Decimal(seg2.p1.y)
-    x4, y4 = Decimal(seg2.p2.x), Decimal(seg2.p2.y)
+    x1, y1 = seg1.p1.x, seg1.p1.y
+    x2, y2 = seg1.p2.x, seg1.p2.y
+    x3, y3 = seg2.p1.x, seg2.p1.y
+    x4, y4 = seg2.p2.x, seg2.p2.y
 
-    denominator = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
+    dx1 = x2 - x1
+    dx2 = x4 - x3
+    dy1 = y2 - y1
+    dy2 = y4 - y3
+    dx3 = x1 - x3
+    dy3 = y1 - y3
 
-    if denominator == 0:
-        # Check for collinear overlapping segments
-        if ((y2 - y1) * (x3 - x1) == (y3 - y1) * (x2 - x1)) and ((y4 - y3) * (x1 - x3) == (y1 - y3) * (x4 - x3)):
-            return find_collinear_intersections(seg1, seg2)
+    det = dx1 * dy2 - dx2 * dy1
+    det1 = dx1 * dy3 - dx3 * dy1
+    det2 = dx2 * dy3 - dx3 * dy2
+
+    if det == 0:
+        if det1 != 0.0 or det2 != 0.0:
+            return []
+
+        return find_collinear_intersections(seg1, seg2)
+
+    s = det1 / det
+    t = det2 / det
+
+    if 0.0 <= s <= 1.0 and 0.0 <= t <= 1.0:
+        return [Point(x1 + t * dx1, y1 + t * dy1)]
+    else:
         return []
-
-    num_x = ((x1 * y2 - y1 * x2) * (x3 - x4)) - ((x1 - x2) * (x3 * y4 - y3 * x4))
-    num_y = ((x1 * y2 - y1 * x2) * (y3 - y4)) - ((y1 - y2) * (x3 * y4 - y3 * x4))
-
-    inter_x = num_x / denominator
-    inter_y = num_y / denominator
-
-    # Check if the intersection point is within both segments' bounds
-    if (min(x1, x2) <= inter_x <= max(x1, x2)) and (min(y1, y2) <= inter_y <= max(y1, y2)) \
-            and (min(x3, x4) <= inter_x <= max(x3, x4)) and (min(y3, y4) <= inter_y <= max(y3, y4)):
-        return [Point(inter_x, inter_y)]
-    return []
 
 
 def find_collinear_intersections(seg1, seg2):
@@ -78,8 +79,8 @@ def load_segments_from_csv(filepath):
     with open(filepath, newline='') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=';')
         for row in reader:
-            p1 = Point(Decimal(bin2float(row['x1'])), Decimal(bin2float(row['y1'])))
-            p2 = Point(Decimal(bin2float(row['x2'])), Decimal(bin2float(row['y2'])))
+            p1 = Point((bin2float(row['x1'])), (bin2float(row['y1'])))
+            p2 = Point((bin2float(row['x2'])), (bin2float(row['y2'])))
             segments.append(Segment(p1, p2))
     return segments
 
