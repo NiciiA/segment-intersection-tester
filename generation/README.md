@@ -1,24 +1,48 @@
 # Segment Intersection Benchmarker
 
-A Python-based toolset for generating, displaying, minimizing, and testing computational test cases. Designed for developers working on implementations that require precision evaluation and correctness testing.
+A Python-based toolset for generating, transforming, displaying, minimizing, and testing geometric segment intersection test cases. Designed for researchers and developers evaluating precision, performance, and correctness in geometric algorithms such as Mulmuley's.
 
 ## Table of Contents
 
 - [Features](#features)
+- [Installation](#installation)
 - [Usage](#usage)
   - [displayer.py](#displayerpy)
   - [generator.py](#generatorpy)
   - [minimizer.py](#minimizerpy)
   - [tester.py](#testerpy)
+  - [number_converter.py](#numberconverterpy)
+  - [street_exporter.py](#streetexporterpy)
+  - [street_converter.py](#streetconverterpy)
+  - [json_converter.py](#jsonconverterpy)
+  - [ogdf_converter.py](#ogdfconverterpy)
+  - [length_randomizer.py](#lengthrandomizerpy)
+  - [line_shuffler.py](#lineshufflerpy)
+- [Output Format](#output-format)
+- [Directory Structure](#directory-structure)
 
 ---
 
 ## Features
 
-- **Visual display** of test cases and intersection results
-- **Random test case generation**
-- **Minimization** of failing test cases for easier debugging
-- **Automated testing** of implementations with accuracy checks
+- 📈 **Visual display** of test cases and segment intersections
+- 🧪 **Random test case generation** with reproducible CSV output
+- 🪓 **Minimization** of failing test cases for debugging
+- 🔍 **Automated accuracy testing** across multiple implementations
+- 🔁 **Format conversion**: CSV ⇄ JSON, GeoJSON, OGDF
+- ⚙️ **Preprocessing tools**: Segment length randomization, order shuffling
+
+---
+
+## Installation
+
+Clone the repository and install dependencies:
+
+```bash
+git clone https://github.com/yourname/segment-intersection-benchmarker.git
+cd segment-intersection-benchmarker
+pip install -r requirements.txt
+```
 
 ---
 
@@ -26,15 +50,13 @@ A Python-based toolset for generating, displaying, minimizing, and testing compu
 
 ### `displayer.py`
 
-Visualizes a test case or returns the number of intersections (using Python's `Decimal` precision of 100).
+Displays a test case graphically or returns the number of segment intersections.
 
 ```bash
+# Display mode
 python displayer.py -f path/to/testcase.txt -d
-```
 
-Without `-d`, it simply returns the number of intersections:
-
-```bash
+# Intersection count only
 python displayer.py -f path/to/testcase.txt
 ```
 
@@ -42,40 +64,136 @@ python displayer.py -f path/to/testcase.txt
 
 ### `generator.py`
 
-Generates new test cases.
+Generates new test cases in CSV format.
 
 ```bash
 python generator.py
 ```
 
-You can customize the script to control the number and complexity of generated cases.
-
 ---
 
 ### `minimizer.py`
 
-Minimizes a failing test case that causes an error in a specific implementation.
+Minimizes a failing test case to the smallest version that still causes failure.
 
 ```bash
-python minimizer.py -t "python your_implementation.py" -i path/to/input.txt -o path/to/minimized_output.txt
+python minimizer.py -t "python your_implementation.py" -i input.csv -o minimized.csv
 ```
-
-**Arguments:**
-- `-t`: Command to test the implementation
-- `-i`: Input test case file
-- `-o`: Output file for the minimized instance
 
 ---
 
 ### `tester.py`
 
-Tests one or more implementations against a set of test cases and expected output files.
+Tests one or more implementations against test cases and reference outputs.
 
 ```bash
-python tester.py -f test_cases/ -a accuracy_outputs/ -c "python impl1.py" "python impl2.py"
+python tester.py -f test_cases/ -a test_cases/accuracy_outputs/ -c "python implementation1.py" "python implementation2.py"
 ```
 
-**Arguments:**
-- `-f`: Path to a file or folder of test cases
-- `-a`: Path to accuracy/reference output files
-- `-c`: One or more implementation commands to test
+---
+
+### `number_converter.py`
+
+Converts float coordinate CSV files to binary-encoded format (IEEE 754).
+
+```bash
+python number_converter.py -f input.csv -o output.csv
+```
+
+---
+
+### `street_exporter.py`
+
+Downloads street network data from OpenStreetMap as GeoJSON.
+
+```bash
+python street_exporter.py -p "1010, Vienna, Austria" -n drive -o streets.geojson
+```
+
+---
+
+### `street_converter.py`
+
+Converts `.geojson` street files into binary-encoded `.csv` files.
+
+```bash
+python street_converter.py
+```
+
+Scans the current directory for `.geojson` files and generates `.csv` files with the same base name.
+
+---
+
+### `json_converter.py`
+
+Converts segment CSV files to a structured JSON array.
+
+```bash
+python json_converter.py -i input.csv -o output.json
+```
+
+---
+
+### `ogdf_converter.py`
+
+Converts segment data into `.gml` format for OGDF-based visualization tools.
+
+```bash
+python ogdf_converter.py -i input.csv -o output.gml
+```
+
+---
+
+### `length_randomizer.py`
+
+Randomly adjusts the length of each segment by ±10% while keeping direction.
+
+```bash
+python length_randomizer.py -i input.csv -o randomized.csv
+```
+
+---
+
+### `line_shuffler.py`
+
+Shuffles the order of segments in a CSV file.
+
+```bash
+python line_shuffler.py -i input.csv -o shuffled.csv
+```
+
+---
+
+## Output Format
+
+Generated or processed CSVs contain:
+
+```
+x1;y1;x2;y2
+00001010;00000011;00001100;00000101
+...
+```
+
+Binary strings represent integer or float coordinates, depending on the conversion pipeline.
+
+---
+
+## Directory Structure
+
+```text
+segment-intersection-benchmarker/
+├── displayer.py
+├── generator.py
+├── minimizer.py
+├── tester.py
+├── number_converter.py
+├── street_exporter.py
+├── street_converter.py
+├── json_converter.py
+├── ogdf_converter.py
+├── length_randomizer.py
+├── line_shuffler.py
+├── tests/
+├── examples/
+└── README.md
+```
