@@ -5,3 +5,5 @@ osmnx
 ogdf_python
 ogdf_wheel
 click
+tqdm
+sh
