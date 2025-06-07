@@ -4,18 +4,12 @@ use std::iter::FromIterator;
 
 use csv::ReaderBuilder;
 use psutil::process::Process;
-use std::env;
 use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
 use std::time::Instant;
 
-use env_logger;
-
 fn main() {
-    env::set_var("RUST_LOG", "trace");
-    env_logger::init();
-
     let args: Vec<String> = env::args().collect();
 
     let filename = if args.len() > 2 && args[1] == "-f" {
