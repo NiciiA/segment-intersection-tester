@@ -8,7 +8,11 @@ Each line in the CSV uses the following format:
 ```
 x1;y1:x2;y2
 ```
-Coordinates are stored as 64-bit binary doubles to preserve precision.
+Coordinates are stored as 64-bit binary doubles to guaranty consistency throughout all implementations.
+
+The test data is also:
+- **Randomized** in segment length using `/utils/length_randomizer.py`
+- **Shuffled** in order using `/utils/line_shuffler.py`
 
 ## Table of Contents
 1. [Vienna Districts](#vienna-districts)
@@ -20,20 +24,20 @@ Coordinates are stored as 64-bit binary doubles to preserve precision.
 
 ---
 
-## Vienna Districts
-Tests using real-world data from **Vienna**'s districts. This set evaluates spatial indexing, region boundary intersection, and geographic precision using administrative divisions.
+## Vienna  
+Innere Stadt, Leopoldstadt, Landstraße, Wieden, Margareten, Mariahilf, Neubau, Josefstadt, Alsergrund, Favoriten, Simmering, Meidling, Hietzing, Penzing, Rudolfsheim-Fünfhaus, Ottakring, Hernals, Währing, Döbling, Brigittenau, Floridsdorf, Donaustadt, Liesing
 
-## New York Boroughs
-Tests using real-world data from **New York**'s boroughs. This set evaluates spatial indexing, region boundary intersection, and geographic precision using administrative divisions.
+## New York  
+Manhattan, Brooklyn, Queens, The Bronx, Staten Island
 
-## Paris Arrondissements
-Tests using real-world data from **Paris**'s arrondissements. This set evaluates spatial indexing, region boundary intersection, and geographic precision using administrative divisions.
+## Paris  
+1er, 2e, 3e, 4e, 5e
 
-## London Boroughs
-Tests using real-world data from **London**'s boroughs. This set evaluates spatial indexing, region boundary intersection, and geographic precision using administrative divisions.
+## London  
+Barking and Dagenham, Barnet, Bexley, Brent, Bromley, Camden, Croydon, Ealing, Enfield, Greenwich, Hackney, Hammersmith and Fulham, Haringey, Harrow, Havering, Hillingdon, Hounslow, Islington, Kensington and Chelsea, Kingston upon Thames, Lambeth, Lewisham, Merton, Newham, Redbridge, Richmond upon Thames, Southwark, Sutton, Tower Hamlets, Waltham Forest, Wandsworth, Westminster
 
-## Berlin Bezirke
-Tests using real-world data from **Berlin**'s bezirke. This set evaluates spatial indexing, region boundary intersection, and geographic precision using administrative divisions.
+## Berlin  
+Mitte, Friedrichshain-Kreuzberg, Pankow, Charlottenburg-Wilmersdorf, Neukölln
 
-## Amsterdam Districts
-Tests using real-world data from **Amsterdam**'s districts. This set evaluates spatial indexing, region boundary intersection, and geographic precision using administrative divisions.
+## Amsterdam  
+Centrum, West, Zuid, Oost, Noord
