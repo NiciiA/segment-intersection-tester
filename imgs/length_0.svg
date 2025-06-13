@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="126pt" height="125.28pt" viewBox="0 0 126 125.28" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2025-06-12T15:55:08.977560</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.6.3, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 125.28 
+L 126 125.28 
+L 126 0 
+L 0 0 
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="line2d_1">
+    <defs>
+     <path id="mfae5bbf44d" d="M 0 2 
+C 0.530406 2 1.03916 1.789267 1.414214 1.414214 
+C 1.789267 1.03916 2 0.530406 2 0 
+C 2 -0.530406 1.789267 -1.03916 1.414214 -1.414214 
+C 1.03916 -1.789267 0.530406 -2 0 -2 
+C -0.530406 -2 -1.03916 -1.789267 -1.414214 -1.414214 
+C -1.789267 -1.03916 -2 -0.530406 -2 0 
+C -2 0.530406 -1.789267 1.03916 -1.414214 1.414214 
+C -1.03916 1.789267 -0.530406 2 0 2 
+z
+"/>
+    </defs>
+    <g clip-path="url(#p6985ce1a87)">
+     <use xlink:href="#mfae5bbf44d" x="40.68" y="62.64" style="fill: #ff0000"/>
+    </g>
+   </g>
+   <g id="line2d_2">
+    <g clip-path="url(#p6985ce1a87)">
+     <use xlink:href="#mfae5bbf44d" x="51.84" y="62.64" style="fill: #ff0000"/>
+    </g>
+   </g>
+   <g id="line2d_3">
+    <g clip-path="url(#p6985ce1a87)">
+     <use xlink:href="#mfae5bbf44d" x="63" y="62.64" style="fill: #ff0000"/>
+    </g>
+   </g>
+   <g id="line2d_4">
+    <g clip-path="url(#p6985ce1a87)">
+     <use xlink:href="#mfae5bbf44d" x="74.16" y="62.64" style="fill: #ff0000"/>
+    </g>
+   </g>
+   <g id="line2d_5">
+    <g clip-path="url(#p6985ce1a87)">
+     <use xlink:href="#mfae5bbf44d" x="85.32" y="62.64" style="fill: #ff0000"/>
+    </g>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p6985ce1a87">
+   <rect x="7.2" y="7.2" width="111.6" height="110.88"/>
+  </clipPath>
+ </defs>
+</svg>
