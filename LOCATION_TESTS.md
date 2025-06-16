@@ -34,7 +34,7 @@ Manhattan, Brooklyn, Queens, The Bronx, Staten Island
 1er, 2e, 3e, 4e, 5e
 
 ## London  
-Barking and Dagenham, Barnet, Bexley, Brent, Bromley, Camden, Croydon, Ealing, Enfield, Greenwich, Hackney, Hammersmith and Fulham, Haringey, Harrow, Havering, Hillingdon, Hounslow, Islington, Kensington and Chelsea, Kingston upon Thames, Lambeth, Lewisham, Merton, Newham, Redbridge, Richmond upon Thames, Southwark, Sutton, Tower Hamlets, Waltham Forest, Wandsworth, Westminster
+Camden, Kensington and Chelsea
 
 ## Berlin  
 Mitte, Friedrichshain-Kreuzberg, Pankow, Charlottenburg-Wilmersdorf, Neukölln

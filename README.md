@@ -1,22 +1,37 @@
 # segment-intersection-tester
 
-# Usage
+A complete testing framework for evaluating segment intersection algorithms.
+Includes a ready-to-deploy Docker environment, a suite of test generators, and support for integrating with a variety of intersection implementations.
 
-Call any of the binaries with `-f FILENAME` to specify a csv input file, otherwise the default segment set of
-`((1, 0), (0, 1)),
-((0, 0.75), (1, 0.25)),
-((0, 0.25), (1, 0.75)),
-((0, 0), (1, 1))`
-will be used.
-Pass `-a` to also print all intersections (might increase running time).
+---
 
-# Output Format
+## What is inside
 
-The last three lines will contain
-the found number of intersections, where each overlapping segment is counted as two intersection (at its beginning and
-its end),
-the time taken for computing the intersections in milliseconds,
-and the memory used for the computation in terms of difference in RSS before and after the computation.
+- **Test Set Generator**  
+  Automated tools to generate test sets for intersection evaluation.
+
+- **Test Utilities (in `/generation`)**  
+  A collection of tools to modify, convert, randomize, and analyze test data:
+  - `generator.py` – main test case generator
+  - `street_exporter.py` & `street_converter.py` – OpenStreetMap-based real-world test set extraction
+  - `random_generator.py`, `length_randomizer.py`, `line_shuffler.py`, `minimizer.py` – utilities to transform or stress-test datasets
+  - `json_converter.py`, `number_converter.py`, `ogdf_converter.py` – format converters
+  - `export_all.py`, `displayer.py` – output management and visualization
+  - `tester_accuracy.py` – utility to run precision-sensitive evaluations
+
+- **Adapters**  
+  Interface layers for plugging in different algorithm implementations or frameworks. List of implementations given below [Implementations](#implementations)
+
+- **tester.py**  
+  Script to run and evaluate all test sets.
+
+- **build.sh**  
+  Build script to prepare the Docker environment and install all dependencies.
+
+- **Dockerfile**  
+  The Dockerfile for the Docker environment.
+
+---
 
 # Implementations
 
@@ -50,6 +65,40 @@ EPECK = Exact_predicates_exact_constructions_kernel
 - from Graph Drawings
 - from Test Suites?
 - from GD Contest
+
+---
+
+## How to Use It
+
+1. **Generate test sets**  
+   Run the generator to create test inputs:
+   ```bash
+   python generation/generator.py
+   ```
+
+2. **Set up the Docker environment**  
+   Build the container using the provided Dockerfile:
+   ```bash
+   docker build -t segment-tester .
+   ```
+
+3. **Run the tests inside Docker**  
+   Start the container and execute the tester:
+   ```bash
+   docker run --rm -v $(pwd):/app segment-tester python tester.py
+   ```
+
+4. **Copy the results from Docker to your local environment**  
+   If needed:
+   ```bash
+   docker cp <container_id>:/app/results ./results
+   ```
+
+5. **Inspect the results**  
+   Review output logs, accuracy stats, and any exported result files under the `/results` directory.
+
+
+---
 
 # Notes
 
@@ -102,3 +151,26 @@ EPECK = Exact_predicates_exact_constructions_kernel
   - Docker / Dependencies auf Cluster
   - SLURM?
   - Shared Folder
+
+
+
+
+
+
+# Usage
+
+Call any of the binaries with `-f FILENAME` to specify a csv input file, otherwise the default segment set of
+`((1, 0), (0, 1)),
+((0, 0.75), (1, 0.25)),
+((0, 0.25), (1, 0.75)),
+((0, 0), (1, 1))`
+will be used.
+Pass `-a` to also print all intersections (might increase running time).
+
+# Output Format
+
+The last three lines will contain
+the found number of intersections, where each overlapping segment is counted as two intersection (at its beginning and
+its end),
+the time taken for computing the intersections in milliseconds,
+and the memory used for the computation in terms of difference in RSS before and after the computation.
