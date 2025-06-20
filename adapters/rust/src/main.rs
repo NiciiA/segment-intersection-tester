@@ -2,6 +2,7 @@ use geo::sweep::Intersections;
 use geo::{Line, LineIntersection};
 use std::iter::FromIterator;
 
+use std::env;
 use csv::ReaderBuilder;
 use psutil::process::Process;
 use std::error::Error;
