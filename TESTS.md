@@ -206,8 +206,41 @@ This test set consists of 500 to 5000 vertical segments arranged left to right, 
 
 # Graph Study / Graph Drawing Contest Test Set
 
+This section describes the test set we used, which combines graphs from two major sources: the **Graph Drawing Contest 2024** and the **Graph Study** dataset.
 
+---
 
+### 1. Graph Drawing Contest 2024
+
+- **15 graphs** from the [Graph Drawing Contest 2024](https://mozart.diei.unipg.it/gdcontest/2024/results/)
+- Website: [GD Contest 2024 Results](https://mozart.diei.unipg.it/gdcontest/2024/results/)
+- Paper: [LIPIcs.GD.2024.41](https://drops.dagstuhl.de/entities/document/10.4230/LIPIcs.GD.2024.41)
+
+We selected **15 graphs** from the contest that have **integer coordinates**. 
+
+### 2. Graph Study
+
+- **100 randomly selected graphs** from the [Graph Study dataset](https://github.com/5gon12eder/msc-graphstudy)
+- Paper: [ArXiv:1809.01017](https://arxiv.org/pdf/1809.01017)
+- Repository: [GitHub - msc-graphstudy](https://github.com/5gon12eder/msc-graphstudy)
+
+From this dataset, we **randomly selected 100 graphs**. 
+
+---
+
+## Format and Conversion
+
+- Original formats: `.json` and `.gml`
+- Converted to: `.csv` (custom format)
+- Conversion scripts:
+  - `json_converter.py` for `.json` files
+  - `ogdf_converter.py` for `.gml` files
+
+Each graph is stored in `.csv` format for compatibility with our processing pipeline.
+
+File naming convention:
+- `{hex_code}_XX.csv` for Graph Drawing Contest graphs
+- `automatic_XXX.csv` for Graph Study graphs
 
 ---
 
