@@ -202,4 +202,13 @@ This tests segments densely packed in a small region to simulate high-intersecti
 
 This test set consists of 500 to 5000 vertical segments arranged left to right, along with a single near-horizontal segment near the top. It is designed to test the accuracy of intersection detection in scenarios where floating-point rounding may affect results. Each configuration is also included in a version rotated by 90 degrees.
 
+---
+
+# Graph Study / Graph Drawing Contest Test Set
+
+
+
+
+---
+
 TODO (MS): Description of LEDA test cases
