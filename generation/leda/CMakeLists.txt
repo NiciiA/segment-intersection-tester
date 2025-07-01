@@ -55,8 +55,3 @@ add_gen_executable(gen_leda_sweep_time_difficult DEFINES LIBS LEDA)
 
 ########################################################################################################################
 
-find_package(OGDF REQUIRED)
-find_package(Boost REQUIRED COMPONENTS iostreams)
-
-add_executable(ogdf_to_segint ogdf_converter.cpp)
-target_link_libraries(ogdf_to_segint OGDF Boost::iostreams)

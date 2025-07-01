@@ -1,0 +1,31 @@
+This directory contains several segment testset generators taken from
+or inspired by LEDA.
+
+Generators
+
+- gen_leda_sweep_time_difficult.cpp
+  - The generator based on demo/sweep_time.cpp - DIFFI mode only
+- gen_leda_sweep_time_random.cpp
+  - The generator based on demo/sweep_time.cpp - RANDOM mode only
+- gen_leda_highly_degenerate.py
+  - 
+
+Helper
+
+- gen_leda.sh
+  - Run all generators above with parameters as used in LEDA
+    publications or determined by us.
+    - The instances not representable within 64bit numbers are
+      dropped.
+  - They instances output into the testsets/ subfolder.
+
+How to use
+
+First, compile the generators with:
+
+cmake .
+cmake --build
+
+Then run the generator script:
+
+./gen_leda.sh
