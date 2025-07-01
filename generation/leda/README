@@ -8,7 +8,10 @@ Generators
 - gen_leda_sweep_time_random.cpp
   - The generator based on demo/sweep_time.cpp - RANDOM mode only
 - gen_leda_highly_degenerate.py
-  - 
+  - A generator that generates 100 random segments in a side-length
+    100 grid.
+- gen_leda_circle_segments.cpp
+  - A generator that generates two shifted overlapping n-gons.
 
 Helper
 

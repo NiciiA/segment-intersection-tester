@@ -22,7 +22,7 @@ fi
 
 for d in {1..10}; do
 
-    ## Generate data sets in the same way as in the LEDA 7.2 Guide, page 121.
+    # Generate data sets in the same way as in the LEDA 7.2 Guide, page 121. 
 
     # Generate "Random" test set
     for ((k=10; k<=60; k+=10)); do # Originally <=100 but this would yield numbers with more than 64 bits.
@@ -44,5 +44,12 @@ for d in {1..10}; do
     # Not needed: ../generator.py is already called with the corresponding arguments.
     # python3 gen_leda_highly_degenerate.py > testsets/leda_highly_degenerate_d${d}.csv
 
-done
+    # Generate shifted-n-gon test set
+    for ((N=10; N<=10000; N*=100)); do
+	for ((r=800; r<=8000000; r*=100)); do
+	    ./gen_leda_circle_segments $N $r > testsets/leda_circle_segments_N${N}_r${r}.csv
+	    python3 ../number_converter.py --file testsets/leda_circle_segments_N${N}_r${r}.csv --output testsets-binary/leda_circle_segments_N${N}_r${r}.csv
+	done
+    done
 
+done
