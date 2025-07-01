@@ -202,4 +202,74 @@ This tests segments densely packed in a small region to simulate high-intersecti
 
 This test set consists of 500 to 5000 vertical segments arranged left to right, along with a single near-horizontal segment near the top. It is designed to test the accuracy of intersection detection in scenarios where floating-point rounding may affect results. Each configuration is also included in a version rotated by 90 degrees.
 
+---
+
+# Graph Study / Graph Drawing Contest Test Set
+
+This section describes the test set we used, which combines graphs from two major sources: the **Graph Drawing Contest 2024** and the **Graph Study** dataset.
+
+---
+
+### 1. Graph Drawing Contest 2024
+
+- **15 graphs** from the [Graph Drawing Contest 2024](https://mozart.diei.unipg.it/gdcontest/2024/results/)
+- Website: [GD Contest 2024 Results](https://mozart.diei.unipg.it/gdcontest/2024/results/)
+- Paper: [LIPIcs.GD.2024.41](https://drops.dagstuhl.de/entities/document/10.4230/LIPIcs.GD.2024.41)
+- Original format: `.json`, converted to our `.csv` format using `json_converter.py` 
+- File naming convention: `automatic_XXX.csv`
+
+We selected **15 graphs** from the contest that have **integer coordinates**. 
+
+### 2. Graph Study
+
+- **100 randomly selected graphs** from the [Graph Study dataset](https://github.com/5gon12eder/msc-graphstudy)
+- Paper: [ArXiv:1809.01017](https://arxiv.org/pdf/1809.01017)
+- Repository: [GitHub - msc-graphstudy](https://github.com/5gon12eder/msc-graphstudy)
+- Original format: `.gml`, converted to our `.csv` format using `ogdf_converter.py` 
+- File naming convention: `{hex_code}_XX.csv`
+
+From this dataset, we **randomly selected 100 graphs**. 
+
+---
+
+# Location-Based Test Set
+
+This section describes the location test set we used.
+
+These tests are based on real-world location data from OpenStreetMap, exported using:
+- `/generation/street_exporter.py` → to generate **GeoJSON**
+- `/generation/street_converter.py` → to convert it into our internal **CSV format**
+
+Each line in the CSV uses the following format:
+```
+x1;y1:x2;y2
+```
+Coordinates are stored as 64-bit binary doubles to guaranty consistency throughout all implementations.
+
+The test data is also:
+- **Randomized** in segment length using `/utils/length_randomizer.py`
+- **Shuffled** in order using `/utils/line_shuffler.py`
+
+---
+
+### Vienna  
+Innere Stadt, Leopoldstadt, Landstraße, Wieden, Margareten, Mariahilf, Neubau, Josefstadt, Alsergrund, Favoriten, Simmering, Meidling, Hietzing, Penzing, Rudolfsheim-Fünfhaus, Ottakring, Hernals, Währing, Döbling, Brigittenau, Floridsdorf, Donaustadt, Liesing
+
+### New York  
+Manhattan, Brooklyn, Queens, The Bronx, Staten Island
+
+### Paris  
+1er, 2e, 3e, 4e, 5e
+
+### London  
+Camden, Kensington and Chelsea
+
+### Berlin  
+Mitte, Friedrichshain-Kreuzberg, Pankow, Charlottenburg-Wilmersdorf, Neukölln
+
+### Amsterdam  
+Centrum, West, Zuid, Oost, Noord
+
+---
+
 TODO (MS): Description of LEDA test cases
