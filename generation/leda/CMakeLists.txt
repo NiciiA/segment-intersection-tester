@@ -53,6 +53,7 @@ endfunction()
 add_gen_executable(gen_leda_sweep_time_random DEFINES LIBS LEDA)
 add_gen_executable(gen_leda_sweep_time_difficult DEFINES LIBS LEDA)
 add_gen_executable(gen_leda_circle_segments DEFINES LIBS LEDA)
+add_gen_executable(gen_leda_geo_sweep_intersection_time DEFINES LIBS LEDA)
 
 ########################################################################################################################
 

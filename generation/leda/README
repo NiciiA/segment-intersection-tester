@@ -11,7 +11,7 @@ Generators
   - A generator that generates 100 random segments in a side-length
     100 grid.
 - gen_leda_circle_segments.cpp
-  - A generator that generates two shifted overlapping n-gons.
+  - A generator that generates two rotated overlapping n-gons.
 
 Helper
 
@@ -20,7 +20,7 @@ Helper
     publications or determined by us.
     - The instances not representable within 64bit numbers are
       dropped.
-  - They instances output into the testsets/ subfolder.
+  - The output instances are put into the testsets/ subfolder.
 
 How to use
 
