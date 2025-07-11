@@ -1,70 +1,73 @@
+import csv
+import argparse
 import os
-import re
-import numpy as np
-import pandas as pd
+
 import matplotlib.pyplot as plt
+from collections import defaultdict
+import re
 
+def extract_segment_count(input_filename):
+    # Extracts the number at the end before ".csv"
+    match = re.search(r"_(\d+)(?:\.csv)?$", input_filename)
+    return int(match.group(1)) if match else None
 
-merged_time = pd.read_csv("merged_time.csv")
-merged_memory = pd.read_csv("merged_memory.csv")
+def plot_runtimes(csv_path, command_filters, input_prefixes):
+    data = defaultdict(lambda: defaultdict(float))  # {command: {segment_count: runtime}}
 
-# Ensure the 'plots' directory exists
-os.makedirs('plots', exist_ok=True)
+    with open(csv_path, newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            full_command = row.get("command", "").strip()
+            input_path = row.get("input", "").strip()
+            time = row.get("time", "").strip()
 
-# List of valid prefixes for plotting
-plotting_prefixes = [
-    "rounding_s", "rounding_m", "rounding_l",
-    "clustered_s", "clustered_m", "clustered_l", "clustered_xl", "clustered_xxl", "clustered_xxxl", "clustered_xxxxl", "clustered_xxxxxl",
-    "clustered_xxxxxxl", "clustered_xxxxxxxl", "clustered_xxxxxxxxl",
-    "clustered_xxxxxxxxxl", "clustered_xxxxxxxxxxl", "clustered_xxxxxxxxxxxl", "clustered_xxxxxxxxxxxxl", "clustered_xxxxxxxxxxxxxl", "clustered_xxxxxxxxxxxxxxl",
-    "clustered_xxxxxxxxxxxxxxxl", "clustered_xxxxxxxxxxxxxxxxl", "clustered_xxxxxxxxxxxxxxxxxl", "clustered_xxxxxxxxxxxxxxxxxxl", "clustered_xxxxxxxxxxxxxxxxxxxl",
-    "random_s", "random_m", "random_l", "star_intersections_4", "star_intersections_6", "star_intersections_7", "star_intersections_8"
-]
+            if not any(c in full_command for c in command_filters):
+                continue
+            if not any(prefix in input_path for prefix in input_prefixes):
+                continue
 
-# Replace these with actual DataFrames
-dfs = [merged_time, merged_memory]
-df_names = ['time', 'memory']
+            seg_count = extract_segment_count(input_path)
+            if seg_count is None:
+                continue
 
-# Iterate over each DataFrame
-for df, df_name in zip(dfs, df_names):
-    df = df.copy()  # Avoid modifying the original DataFrame
-    df["Prefix"] = df["File"].apply(lambda x: "_".join(x.split('_')[1:-1]))  # Extract prefix
-    df = df[df["Prefix"].isin(plotting_prefixes)]
+            try:
+                runtime = float(time)
+            except ValueError:
+                continue
 
-    def extract_x_value(filename):
-        match = re.search(r'(\d+)(?=\.csv$)', filename)
-        return int(match.group(1)) if match else None
+            data[full_command][seg_count] = runtime
 
-    df.loc[:, "X_Value"] = df["File"].apply(extract_x_value)
+    # Plot
+    plt.figure(figsize=(10, 6))
+    for command, results in data.items():
+        x = sorted(results.keys())
+        y = [results[k] for k in x]
+        label = os.path.basename(command)  # This shows just 'test_leda-mm-d' instead of full path
+        plt.plot(x, y, marker='o', label=label)
 
-    for prefix in plotting_prefixes:
-        df_prefix = df[df["Prefix"] == prefix]
-        if df_prefix.empty:
-            continue
+    plt.xlabel("Number of segments")
+    plt.ylabel("Runtime (seconds)")
+    plt.title("Runtime vs Number of Segments")
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig("runtime_comparison.png")
+    plt.show()
+    print("Saved plot as 'runtime_comparison.png'.")
 
-        df_prefix = df_prefix.sort_values(by="X_Value")
-        columns_to_plot = [col for col in df_prefix.columns if col not in ['File', 'Prefix', 'X_Value']]
+def main():
+    parser = argparse.ArgumentParser(description="Plot runtime trends from results.csv")
+    parser.add_argument("-c", "--commands", required=True,
+                        help="Comma-separated list of command substrings")
+    parser.add_argument("-f", "--inputs", required=True,
+                        help="Comma-separated list of input filename prefixes (e.g., star_intersections_9)")
+    parser.add_argument("--file", default="results.csv", help="CSV file path (default: results.csv)")
+    args = parser.parse_args()
 
-        for column in columns_to_plot:
-            df_prefix[column] = pd.to_numeric(df_prefix[column], errors='coerce')
+    command_filters = [c.strip() for c in args.commands.split(",")]
+    input_prefixes = [f.strip() for f in args.inputs.split(",")]
 
-            n_values = df_prefix["X_Value"]
-            y_values = df_prefix[column]
+    plot_runtimes(args.file, command_filters, input_prefixes)
 
-            plt.figure(figsize=(10, 6))
-
-            if 'clustered' not in prefix:
-                valid_indices = ~(np.isnan(y_values) | np.isinf(y_values))
-                n_values_clean = n_values[valid_indices]
-                y_values_clean = y_values[valid_indices]
-
-            plt.plot(n_values, y_values, marker='o', label=column)
-
-            plt.title(f'{prefix} Data - {df_name} - {column}')
-            plt.xlabel('Number of segments' if 'clustered' not in prefix else 'Number of clusters')
-            plt.ylabel('Time in ms' if df_name == 'time' else 'Memory usage in bytes')
-            plt.legend(title='Columns')
-            plt.grid(True)
-
-            plt.savefig(f'plots/{df_name}_{column}_{prefix}.png')
-            plt.close()
+if __name__ == "__main__":
+    main()

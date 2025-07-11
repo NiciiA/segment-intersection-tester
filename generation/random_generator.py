@@ -2,9 +2,9 @@ from generator import random_int, save_segments_to_csv
 
 
 def main():
-    num_calls = 100
-    num_segments = 100
-    max_coord = 10
+    num_calls = 1
+    num_segments = 9
+    max_coord = 3
 
     for i in range(num_calls):
         segments = random_int(num_segments, max_coord)

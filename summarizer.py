@@ -1,59 +1,66 @@
-import pandas as pd
-from pathlib import Path
+import csv
+import argparse
+from collections import defaultdict
 from tabulate import tabulate
 
-def find_csv_files(directory):
-    return list(Path(directory).rglob("*.csv"))
+def summarize_results(csv_path, commands, output_md):
+    # commands: list of substrings to filter by (case-sensitive)
+    summary = defaultdict(dict)
+    inputs_set = set()
 
-def load_and_process_csvs(files):
-    results, times, memories, distances = [], [], [], []
+    with open(csv_path, newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            full_command = row.get("command", "").strip()
+            input_file = row.get("input", "").strip()
+            result = row.get("result", "").strip()
 
-    for file in files:
-        try:
-            df = pd.read_csv(file)
-            file_info = {"file": file.relative_to(Path.cwd())}
+            # Check if any of the short commands are substrings of full_command
+            if not any(short_cmd in full_command for short_cmd in commands):
+                continue
 
-            # Assume single-row CSVs with expected columns
-            row = df.iloc[0].to_dict()
-            for key in ["result", "time", "memory", "distance"]:
-                value = row.get(key)
+            summary[input_file][full_command] = result
+            inputs_set.add(input_file)
 
-                if key == "result" and value is not None:
-                    results.append({**file_info, "result": value})
-                if key == "time" and value is not None:
-                    times.append({**file_info, "time": value})
-                if key == "memory" and value is not None:
-                    memories.append({**file_info, "memory": value})
-                if key == "distance" and value is not None:
-                    distances.append({**file_info, "distance": value})
+    sorted_inputs = sorted(inputs_set)
+    # For columns, show the matching full commands sorted
+    # Collect all unique full commands from summary for header
+    full_commands = set()
+    for v in summary.values():
+        full_commands.update(v.keys())
+    sorted_full_commands = sorted(full_commands)
 
-        except Exception as e:
-            print(f"Error reading {file}: {e}")
+    table = []
+    for inp in sorted_inputs:
+        row = [inp]
+        for cmd in sorted_full_commands:
+            cell = summary[inp].get(cmd, "")
+            row.append(cell)
+        table.append(row)
 
-    return results, times, memories, distances
+    headers = ["Input"] + sorted_full_commands
 
-def write_markdown_tables(results, times, memories, distances):
-    tables = {
-        "merged_results.md": (results, "result"),
-        "merged_time.md": (times, "time"),
-        "merged_memory.md": (memories, "memory"),
-        "merged_distance.md": (distances, "distance"),
-    }
+    md_table = tabulate(table, headers=headers, tablefmt="github")
 
-    for filename, (data, _) in tables.items():
-        if not data:
-            continue
-        with open(filename, "w") as f:
-            f.write(tabulate(data, headers="keys", tablefmt="pipe"))
-            f.write("\n")
-        print(f"Wrote {filename}")
+    with open(output_md, "w") as f:
+        f.write(md_table)
 
-def main(directory="."):
-    csv_files = find_csv_files(directory)
-    results, times, memories, distances = load_and_process_csvs(csv_files)
-    write_markdown_tables(results, times, memories, distances)
+    print(f"Markdown table saved to {output_md}")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Summarize results CSV by input and command.")
+    parser.add_argument("-c", "--commands", required=True,
+                        help="Comma-separated list of commands to include")
+    parser.add_argument("-f", "--file", default="results.csv",
+                        help="CSV file to read (default: results.csv)")
+    parser.add_argument("-o", "--output", default="summary.md",
+                        help="Output Markdown file (default: summary.md)")
+
+    args = parser.parse_args()
+    commands = [c.strip() for c in args.commands.split(",")]
+
+    summarize_results(args.file, commands, args.output)
 
 if __name__ == "__main__":
-    import sys
-    target_dir = sys.argv[1] if len(sys.argv) > 1 else "."
-    main(target_dir)
+    main()

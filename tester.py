@@ -36,6 +36,12 @@ def cli():
     pass
 
 
+"""
+    TODO: add space_limit?
+    leda-mm sort of has endless loop
+"""
+
+
 @cli.command()
 @click.argument("files", required=True, nargs=-1,
                 type=click.Path(exists=True, dir_okay=False, resolve_path=True))
@@ -158,6 +164,14 @@ def collect(dir, out):
             w = csv.DictWriter(out, meta.keys())
             w.writeheader()
         w.writerow(meta)
+
+
+"""
+    TODO: sanity check, rückgabe wert 0 und resultat dann gut,
+                        rückgabe wert != 0 und resultat dann console log
+                        rückgabe wert 0 und kein resultat dann console log
+                        rückgabe wert != und kein resultet dann error.txt mit graceful und ungraceful
+"""
 
 
 if __name__ == '__main__':
