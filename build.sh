@@ -60,3 +60,10 @@ pushd adapters
   popd
 
 popd # /adapters
+
+pushd "generation/leda"
+
+  cmake .
+  cmake --build .
+
+popd
