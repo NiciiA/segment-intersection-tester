@@ -85,11 +85,11 @@ def run_tests(commands, files, parallelism, print_adapters, adapters_dir, **kwar
             print("\n".join(commands))
             return
 
-    thread_map(functools.partial(test_one, memory_limit=kwargs.get("memory_limit"), **kwargs),
+    thread_map(functools.partial(test_one, **kwargs),
                product(commands, files), total=len(commands) * len(files), max_workers=parallelism or None)
 
 
-def test_one(args, *, print_intersections, force, retry_failed, timeout, outdir, outstem, memory_limit=None):
+def test_one(args, *, print_intersections, force, retry_failed, timeout, outdir, outstem, memory_limit):
     if memory_limit:
         try:
             limit_memory(memory_limit)
