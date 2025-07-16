@@ -40,6 +40,7 @@ def find_intersection(seg1, seg2, epsilon=None):
             return
 
         yield from find_collinear_intersections(seg1, seg2)
+        return
 
     s = det1 / det
     t = det2 / det

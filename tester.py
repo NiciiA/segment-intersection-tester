@@ -8,6 +8,7 @@ import socket
 import sys
 import time
 import traceback
+import resource
 from itertools import product
 from pathlib import Path
 
@@ -18,6 +19,12 @@ from tqdm.contrib.concurrent import thread_map
 
 hostname = socket.gethostname()
 username = getpass.getuser()
+
+
+def limit_memory(max_mem_mb):
+    """Limit max virtual memory for the current process and its children."""
+    max_bytes = max_mem_mb * 1024 * 1024
+    resource.setrlimit(resource.RLIMIT_AS, (max_bytes, max_bytes))
 
 
 def parse_timeout(val):
@@ -55,6 +62,8 @@ def cli():
 @click.option("--parallelism", "-p", default=os.cpu_count() - 1)
 @click.option("--print-adapters", is_flag=True)
 @click.option("--adapters-dir", default=None, type=click.Path(exists=True, file_okay=False, resolve_path=True))
+@click.option("--memory-limit", type=int, default=None,
+              help="Maximum memory per test process (in MB)")
 def run_tests(commands, files, parallelism, print_adapters, adapters_dir, **kwargs):
     """Locally run one or more adapter on a given set of files"""
     if not kwargs.get("outstem", ""):
@@ -80,7 +89,13 @@ def run_tests(commands, files, parallelism, print_adapters, adapters_dir, **kwar
                product(commands, files), total=len(commands) * len(files), max_workers=parallelism or None)
 
 
-def test_one(args, *, print_intersections, force, retry_failed, timeout, outdir, outstem):
+def test_one(args, *, print_intersections, force, retry_failed, timeout, outdir, outstem, memory_limit):
+    if memory_limit:
+        try:
+            limit_memory(memory_limit)
+        except Exception as e:
+            tqdm.write(f"could not set memory limit: {e}")
+
     command, file = args
     command_file = Path(command.split(" ")[-1])
     outpath = Path(outdir)

@@ -1,13 +1,10 @@
 #!/bin/bash
 
+source .venv/bin/activate
+
 pushd generation
 
-  pushd "generator"
-    python ./generation/generator.py # standard test generator
-  popd
-
-  pushd "locations"
-    python ./generation/generate_locations.py # location test generator
-  popd
+  python ./generator.py # standard test generator
+  python ./generate_locations.py # location test generator
 
 popd # /generation
