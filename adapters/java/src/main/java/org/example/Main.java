@@ -10,32 +10,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 
-import java.util.logging.*;
-
 public class Main {
 
-    private static final Logger logger = Logger.getLogger(Main.class.getName());
-
     public static void main(String[] args) throws IOException {
-        Handler consoleHandler = new ConsoleHandler();
-        consoleHandler.setFormatter(new SimpleFormatter() {
-            @Override
-            public synchronized String format(LogRecord record) {
-                return record.getMessage() + System.lineSeparator();
-            }
-        });
-
-        // Remove default handlers (the noisy ones)
-        Logger rootLogger = Logger.getLogger("");
-        for (Handler handler : rootLogger.getHandlers()) {
-            rootLogger.removeHandler(handler);
-        }
-
-        // Add our clean handler
-        rootLogger.addHandler(consoleHandler);
-        rootLogger.setLevel(Level.INFO);
-        consoleHandler.setLevel(Level.INFO);
-
         List<LineSegment> segments = new ArrayList<>();
 
         // Parse command-line arguments
@@ -79,9 +56,9 @@ public class Main {
         long durationMillis = (endTime - startTime) / 1_000_000;
         long memoryDiffBytes = endUsedMem - startUsedMem;
 
-        logger.info(String.valueOf(intersector.getIntersections().size()));
-        logger.info(String.valueOf(durationMillis));
-        logger.info(String.valueOf(memoryDiffBytes));
+        System.out.println(intersector.getIntersections().size());
+        System.out.println(durationMillis);
+        System.out.println(memoryDiffBytes);
     }
 
     // CSV Reader

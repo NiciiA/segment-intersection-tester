@@ -23,9 +23,9 @@ std::vector<SegmentString*> segments;
 
 void process_line(const std::string& x1, const std::string& y1, const std::string& x2,
 		const std::string& y2) {
-	segments.push_back(new BasicSegmentString(nullptr,
+	segments.push_back(new BasicSegmentString(
 			new CoordinateSequence({Coordinate(bitstring_to_double(x1), bitstring_to_double(y1)),
-					Coordinate(bitstring_to_double(x2), bitstring_to_double(y2))})));
+					Coordinate(bitstring_to_double(x2), bitstring_to_double(y2))}), nullptr));
 }
 
 template<bool print>
