@@ -8,7 +8,7 @@
 using namespace ogdf;
 
 Graph G;
-GraphAttributes GA(G, GraphAttributes::nodeGraphics);
+GraphAttributes GA(G, GraphAttributes::nodeGraphics | GraphAttributes::edgeGraphics);
 
 void process_line(const std::string& x1, const std::string& y1, const std::string& x2,
 		const std::string& y2) {
