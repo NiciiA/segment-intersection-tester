@@ -39,9 +39,18 @@ pushd adapters
 
   mkdir -p "deps/ogdf/build-release"
   pushd "deps/ogdf/build-release"
-    cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=TRUE -DCMAKE_POLICY_DEFAULT_CMP0069=NEW -DBUILD_SHARED_LIBS=OFF \
-      -DOGDF_MEMORY_MANAGER=POOL_NTS -DOGDF_USE_ASSERT_EXCEPTIONS=OFF
+
+    cmake .. \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=TRUE \
+      -DCMAKE_POLICY_DEFAULT_CMP0069=NEW \
+      -DBUILD_SHARED_LIBS=OFF \
+      -DOGDF_MEMORY_MANAGER=POOL_NTS \
+      -DOGDF_USE_ASSERT_EXCEPTIONS=OFF \
+      -DCMAKE_CXX_FLAGS="-O2 -march=x86-64 -mno-avx -mno-avx2 -mno-avx512f"
+
     cmake --build . --target OGDF -j $(nproc)
+
   popd
 
   mkdir -p "cpp/build-release"
