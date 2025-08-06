@@ -56,7 +56,7 @@ pushd adapters
   mkdir -p "cpp/build-release"
   pushd "cpp/build-release"
     cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=TRUE -DCMAKE_POLICY_DEFAULT_CMP0069=NEW -DBUILD_SHARED_LIBS=OFF \
-      -DOGDF_DIR=$(realpath "../../deps/ogdf/build-release") # -DMPFR_LIBRARIES=/usr/lib64/libmpfr.so # whereis libmpfr.so
+      -DOGDF_DIR="$(realpath "../../deps/ogdf/build-release")" # -DMPFR_LIBRARIES=/usr/lib64/libmpfr.so # whereis libmpfr.so
     cmake --build . --target all -j $(nproc)
   popd
 
@@ -72,10 +72,10 @@ popd # /adapters
 
 pushd "generation/leda"
   cmake .
-  cmake --build .
+  cmake --build . -j $(nproc)
 popd
 
 pushd "generation/ogdf"
-  cmake .
-  cmake --build .
+  cmake . -DOGDF_DIR="$(realpath "../../adapters/deps/ogdf/build-release")"
+  cmake --build . -j $(nproc)
 popd

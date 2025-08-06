@@ -181,6 +181,7 @@ def stat_one_file(file):
     segs = list(read_segments_from_csv(file))
 
     length_0 = horiz = vert = 0
+    points = set()
     for seg in segs:
         if seg[0] == seg[1]:
             length_0 += 1
@@ -188,8 +189,10 @@ def stat_one_file(file):
             horiz += 1
         elif seg[0][1] == seg[1][1]:
             vert += 1
+        points.update(seg)
 
     colinear = online = samepoint = intersect = indep = 0
+    inter_points = set()
     for seg1, seg2 in itertools.combinations(segs, 2):
         inter = list(find_intersection(seg1, seg2, conv=Fraction))
         assert len(inter) <= 2
@@ -199,17 +202,22 @@ def stat_one_file(file):
         elif len(inter) == 0:
             indep += 1
         else:
-            points = set(itertools.chain(seg1, seg2, inter))
-            assert 1 <= len(points) <= 5
-            if len(points) <= 3:
+            inter_points.add(inter[0])
+            ps = set(itertools.chain(seg1, seg2, inter))
+            assert 1 <= len(ps) <= 5
+            if len(ps) <= 3:
                 samepoint += 1
-            elif len(points) == 4:
+            elif len(ps) == 4:
                 online += 1
-            elif len(points) == 5:
+            elif len(ps) == 5:
                 intersect += 1
 
-    return {"file": file, "segs": len(segs), "length_0": length_0, "horiz": horiz, "vert": vert, "colinear": colinear,
-            "online": online, "samepoint": samepoint, "intersect": intersect, "indep": indep}
+    n = len(segs)
+    return {"file": file, "segs": n, "combs": n * (n - 1) // 2,
+            "points": len(points), "intersection_points": len(inter_points),
+            "true_intersection_points": len(inter_points - points),
+            "length_0": length_0, "horiz": horiz, "vert": vert, "colinear": colinear, "online": online,
+            "samepoint": samepoint, "intersect": intersect, "indep": indep}
 
 
 @cli.command()

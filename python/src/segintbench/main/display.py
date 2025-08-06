@@ -31,11 +31,13 @@ def main():
     parser.add_argument('-f', '--file', required=True, help='Path to the CSV file containing segments.')
     parser.add_argument('-r', '--rational', action='store_true',
                         help='Use rational numbers (Fraction) instead of floats for coordinates.')
+    parser.add_argument('-e', '--unencoded', action='store_true',
+                        help='Assume CSV contents are not binary encoded by floats.')
 
     args = parser.parse_args()
 
     # Load segments from the CSV file
-    segments = list(read_segments_from_csv(args.file))
+    segments = list(read_segments_from_csv(args.file, decode=float if args.unencoded else bin2float))
 
     # Calculate intersections
     if args.rational:
