@@ -1,11 +1,59 @@
 import itertools
+import math
 import os
 from collections import namedtuple
 from pathlib import Path
+from typing import NamedTuple
 
-# Define namedtuples
 Point = namedtuple('Point', 'x y')
-Segment = namedtuple('Segment', 'p1 p2')
+
+
+class Segment(NamedTuple):
+    p1: Point
+    p2: Point
+
+    @classmethod
+    def build(cls, *args, **kwargs):
+        if len(args) == 1 and len(kwargs) == 0:
+            return cls.build(*args[0])
+        elif len(args) == 4 and len(kwargs) == 0:
+            return cls(Point(args[0], args[1]), Point(args[2], args[3]))
+        elif len(args) + len(kwargs) <= 2:
+            return cls(*args, **kwargs)
+        else:
+            return cls(*cls.points_from_coords(*args, **kwargs))
+
+    @classmethod
+    def points_from_coords(cls, x1, y1, x2, y2, *coords):
+        yield Point(x1, y1)
+        yield Point(x2, y2)
+        if len(coords) == 0:
+            return
+        if (len(coords) % 2) != 0:
+            raise ValueError("The number of coordinates must be even.")
+        for x, y in itertools.pairwise(coords):
+            yield Point(x, y)
+
+    def coords(self):
+        return self.p1.x, self.p1.y, self.p2.x, self.p2.y
+
+    def map(self, fn):
+        return self.build(map(fn, self.coords()))
+
+    def scale(self, factor):
+        """Extend or shrink a segment from (x1,y1) to (x2,y2) by the given factor."""
+        x1, y1, x2, y2 = self.coords()
+        dx = x2 - x1
+        dy = y2 - y1
+        length = math.hypot(dx, dy)
+
+        if length == 0:
+            return self.build(x1, y1, x2, y2)  # Can't scale a zero-length segment
+
+        scale = factor
+        new_dx = dx * scale
+        new_dy = dy * scale
+        return self.build(x1, y1, x1 + new_dx, y1 + new_dy)
 
 
 # Function to get memory usage
@@ -45,10 +93,10 @@ def find_intersection(seg1, seg2, epsilon=None, conv=lambda x: x):
 
     if epsilon:
         if 0.0 - epsilon <= s <= 1.0 + epsilon and 0.0 - epsilon <= t <= 1.0 + epsilon:
-            yield [Point(x1 + t * dx1, y1 + t * dy1)]
+            yield Point(x1 + t * dx1, y1 + t * dy1)
     else:
         if 0.0 <= s <= 1.0 and 0.0 <= t <= 1.0:
-            yield [Point(x1 + t * dx1, y1 + t * dy1)]
+            yield Point(x1 + t * dx1, y1 + t * dy1)
 
 
 # Function to find collinear intersections
@@ -103,9 +151,9 @@ def write_segments_to_csv(segments, output_path: str, binary_encode=True):
 
         for seg in segments:
             if binary_encode:
-                writer.writerow(map(float2bin, itertools.chain(*seg)))
+                writer.writerow(map(float2bin, seg.coords()))
             else:
-                writer.writerow(itertools.chain(*seg))
+                writer.writerow(seg.coords())
 
 
 def read_segments_from_csv(file: str, decode=bin2float):
@@ -114,4 +162,4 @@ def read_segments_from_csv(file: str, decode=bin2float):
         if header != "x1;y1;x2;y2":  # Skip the header line
             raise IOError(f"Invalid CSV header {header!r}.")
         for line in file:
-            yield Segment(*(map(decode, line.strip().split(';'))))
+            yield Segment.build(map(decode, line.strip().split(';')))

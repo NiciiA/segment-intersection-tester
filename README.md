@@ -71,32 +71,30 @@ EPECK = Exact_predicates_exact_constructions_kernel
 ## How to Use It
 
 ```bash
-#!/bin/bash
-
 source .venv/bin/activate
 
-pushd generation
-
-  python ./generator.py # standard test generator
-  python ./generate_locations.py # location test generator
-
-  pushd leda
+segintbench-generate generate-locations
+segintbench-generate generate-testcases
+pushd generation/leda
     ./gen_leda.sh
-  popd
+popd
 
-popd # /generation
+## msc-graphstudy and GD contest files are available statically,
+## but could be obtained as follows:
+# generation/ogdf/convert_msc_ogdf.sh
+# segintbench-convert from-json --binary gdcontest24/automatic-1.json tests/gdcontest24/automatic-1.csv
 
-# TODO msc, GD Contest
-```
-```python
-def do_generation():
-run_in_dir("generation/generator", ["python", "./generation/generator.py"])
-run_in_dir("generation/locations", ["python", "./generation/generate_locations.py"])
+segintbench-test file-stats tests
+segintbench-test run-tests --print-adapters tests
 
-def do_testing():
-run_in_dir("testing/tests", ["python", "./tester.py", "run-tests", "./data/segment-intersection-data/tests/*"])
-run_in_dir("testing/loctests", ["python", "./tester.py", "run-tests", "./data/segment-intersection-data/tests_location/*"])
-run_in_dir("testing/collecter", ["python", "./tester.py", "collect", "./out", "results.csv"])
+segintbench-test run-tests tests --timeout "10:00" --memory-limit 1024
+segintbench-test run-tests tests --print-intersections --timeout "10:00" --memory-limit 1024
+
+segintbench-test collect ./out results-runtime.csv
+segintbench-test collect ./out-intersections results-intersections.csv
+
+segintbench-test summarize results-runtime.csv --key time
+segintbench-test summarize results-intersections.csv --key result
 ```
 
 1. **Generate test sets**  

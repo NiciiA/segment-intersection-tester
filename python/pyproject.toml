@@ -19,6 +19,13 @@ dependencies = [
   "tabulate",
 ]
 
+[project.scripts]
+segintbench-convert = "segintbench.main.convert:cli"
+segintbench-generate = "segintbench.main.generate:cli"
+segintbench-test = "segintbench.main.test:cli"
+segintbench-display = "segintbench.main.display:main"
+segintbench-minimize = "segintbench.main.minimize:main"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

@@ -1,42 +1,11 @@
-import functools
-import math
 import random
-import re
 from fractions import Fraction
 
-import click
 import numpy as np
-from tqdm import tqdm
-from tqdm.contrib.concurrent import thread_map
 
 from segintbench.utils import *
 
 near_inf = math.nextafter(math.inf, -math.inf)
-
-
-def process_configuration(output_dir, force, func, params, filename, category):
-    filepath = Path(output_dir) / category / filename
-    if filepath.is_file() and not  force:
-        tqdm.write("skipped:", filepath)
-    else:
-        segments = func(*params)
-        write_segments_to_csv(segments, filepath)
-        tqdm.write("done:", filename)
-
-
-@click.command()
-@click.option("--output-dir", "-o", default="tests",
-              type=click.Path(exists=True, dir_okay=True, file_okay=False, resolve_path=True))
-@click.option("--include", default=None)
-@click.option("--exclude", default=None)
-@click.option("--force", default=False)
-@click.option("--parallelism", "-p", default=os.cpu_count() - 1)
-def main(include, exclude, parallelism, **kwargs):
-    incl_re = re.compile(include) if include else None
-    excl_re = re.compile(exclude) if exclude else None
-    thread_map(functools.partial(process_configuration, **kwargs), [
-        c for c in CONFIGURATIONS if (not include or incl_re.match(f"{c[3]}/{c[2]}")) and (not exclude or not excl_re.match(f"{c[3]}/{c[2]}"))
-    ], max_workers=parallelism or None)
 
 
 ########################################################################################################################
@@ -1578,6 +1547,3 @@ CONFIGURATIONS = [
     # (star_intersections_11, (9500, 12345678901234567890), "star_intersections_11_l_9500.csv"),
     # (star_intersections_11, (10000, 12345678901234567890), "star_intersections_11_l_10000.csv"),
 ]
-
-if __name__ == "__main__":
-    main()

@@ -1,13 +1,45 @@
+import functools
+import re
 import json
 
 import click
+from tqdm import tqdm
+from tqdm.contrib.concurrent import thread_map
 
+from segintbench.testcases import CONFIGURATIONS
 from segintbench.utils import *
 
 
 @click.group()
 def cli():
     pass
+
+
+def process_configuration(config, *, output_dir, force):
+    func, params, filename, category = config
+    filepath = Path(output_dir) / category / filename
+    if filepath.is_file() and not force:
+        tqdm.write(f"skipped: {filepath}")
+    else:
+        segments = func(*params)
+        write_segments_to_csv(segments, filepath)
+        tqdm.write(f"done: {filename}")
+
+
+@cli.command()
+@click.option("--output-dir", "-o", default="tests",
+              type=click.Path(exists=False, dir_okay=True, file_okay=False, resolve_path=True))
+@click.option("--include", default=None)
+@click.option("--exclude", default=None)
+@click.option("--force", default=False)
+@click.option("--parallelism", "-p", default=os.cpu_count() - 1)
+def generate_testcases(include, exclude, parallelism, **kwargs):
+    incl_re = re.compile(include) if include else None
+    excl_re = re.compile(exclude) if exclude else None
+    thread_map(functools.partial(process_configuration, **kwargs), [
+        c for c in CONFIGURATIONS if
+        (not include or incl_re.match(f"{c[3]}/{c[2]}")) and (not exclude or not excl_re.match(f"{c[3]}/{c[2]}"))
+    ], max_workers=parallelism or None)
 
 
 def extract_segments_from_geojson(filepath: str):
@@ -39,16 +71,15 @@ def download_street_network(place: str, network_type: str, output_path):
     help='Place name to query (e.g. "Innere Stadt, Vienna, Austria")')
 @click.option(
     '-n', '--network',
-    type=str,
+    type=click.Choice(['drive', 'walk', 'bike', 'all', 'all_private']),
     default='drive',
-    choices=['drive', 'walk', 'bike', 'all', 'all_private'],
     help='Type of network to download (default: drive)')
 @click.option(
     '-o', '--output',
     type=click.Path(dir_okay=False, resolve_path=True),
     default='streets.geojson',
     help='Output file name (default: streets.geojson)')
-def download(place, network, output):
+def geo_download(place, network, output):
     download_street_network(place, network, output)
 
 
@@ -56,21 +87,20 @@ def download(place, network, output):
 @click.argument("input", type=click.Path(exists=True, dir_okay=False, resolve_path=True))
 @click.argument("output", type=click.Path(dir_okay=False, resolve_path=True))
 @click.option("--binary", default=True, is_flag=True)
-def convert(input, output, binary):
+def geo_convert(input, output, binary):
     segments = extract_segments_from_geojson(input)
-    write_segments_to_csv(segments, output, binary_encode=True)
+    write_segments_to_csv(segments, output, binary_encode=binary)
 
 
 @cli.command()
-@click.option("--output-dir", "-o", default="tests")
+@click.option("--output-dir", "-o", default="tests/locations")
 @click.option(
     '-n', '--network',
-    type=str,
+    type=click.Choice(['drive', 'walk', 'bike', 'all', 'all_private']),
     default='drive',
-    choices=['drive', 'walk', 'bike', 'all', 'all_private'],
     help='Type of network to download (default: drive)')
 @click.option("--binary", default=True, is_flag=True)
-def generate_default(output_dir, network, binary):
+def generate_locations(output_dir, network, binary):
     os.makedirs(output_dir, exist_ok=True)
 
     cities = {

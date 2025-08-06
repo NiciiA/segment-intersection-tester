@@ -3,12 +3,15 @@ import datetime
 import functools
 import getpass
 import json
+import re
 import resource
 import socket
 import sys
 import time
 import traceback
 from collections import defaultdict
+from concurrent.futures import ProcessPoolExecutor
+from fractions import Fraction
 from itertools import product
 
 import click
@@ -33,14 +36,26 @@ def parse_timeout(val):
         return val
 
 
+def parse_files(files, default_ext):
+    for file in files:
+        path = Path(file)
+        if path.is_file():
+            yield path
+        elif path.is_dir():
+            yield from path.rglob(default_ext)
+        elif re.search(r"[*?\[]", file):
+            yield from Path('.').glob(file)
+        else:
+            raise click.UsageError(f"Invalid file/directory: {file}")
+
+
 @click.group()
 def cli():
     pass
 
 
 @cli.command()
-@click.argument("files", required=True, nargs=-1,
-                type=click.Path(exists=True, dir_okay=False, resolve_path=True))
+@click.argument("files", required=True, nargs=-1)
 @click.option("--command", "-c", "commands", multiple=True)
 @click.option("--print-intersections", "-a", is_flag=True)
 @click.option("--force", "-f", is_flag=True)
@@ -55,6 +70,7 @@ def cli():
               help="Maximum memory per test process (in MB)")
 def run_tests(commands, files, parallelism, print_adapters, adapters_dir, **kwargs):
     """Locally run one or more adapter on a given set of files"""
+    files = list(parse_files(files, "*.csv"))
     if not kwargs.get("outstem", ""):
         kwargs["outstem"] = Path(os.path.commonpath(Path(f).parent for f in files)).resolve()
     if not kwargs.get("outdir", ""):
@@ -64,7 +80,7 @@ def run_tests(commands, files, parallelism, print_adapters, adapters_dir, **kwar
             kwargs["outdir"] = "./out"
 
     if not commands or print_adapters:
-        adapters_dir = Path(adapters_dir or (Path(__file__).parent / "adapters").resolve())
+        adapters_dir = Path(adapters_dir or f"{__file__}/../../../../../adapters").resolve()
         if not adapters_dir.is_dir() or not (adapters_dir / "cpp/CMakeLists.txt").is_file():
             raise click.UsageError(f"No command specified and no adapters found in {adapters_dir.resolve()}")
         cpp_adapters = [str(e) for e in (adapters_dir / "cpp/build-release").glob("test_*")]
@@ -147,13 +163,63 @@ def test_one(args, *, print_intersections, force, retry_failed, timeout, outdir,
 
 
 @cli.command()
-@click.argument("dir", required=True, type=click.Path(exists=True, file_okay=False, resolve_path=True))
+@click.argument("files", required=True, nargs=-1)
 @click.argument("out", required=True, type=click.File(mode="w"))
-def collect(dir, out):
-    dir = Path(dir)
+@click.option("--parallelism", "-p", default=os.cpu_count() - 1)
+def file_stats(files, out, parallelism):
+    files = list(parse_files(files, "*.csv"))
+    with ProcessPoolExecutor(max_workers=parallelism or None) as ex:
+        w = None
+        for row in tqdm(ex.map(stat_one_file, files), total=len(files)):
+            if not w:
+                w = csv.DictWriter(out, row.keys())
+                w.writeheader()
+            w.writerow(row)
+
+
+def stat_one_file(file):
+    segs = list(read_segments_from_csv(file))
+
+    length_0 = horiz = vert = 0
+    for seg in segs:
+        if seg[0] == seg[1]:
+            length_0 += 1
+        elif seg[0][0] == seg[1][0]:
+            horiz += 1
+        elif seg[0][1] == seg[1][1]:
+            vert += 1
+
+    colinear = online = samepoint = intersect = indep = 0
+    for seg1, seg2 in itertools.combinations(segs, 2):
+        inter = list(find_intersection(seg1, seg2, conv=Fraction))
+        assert len(inter) <= 2
+        if len(inter) == 2:
+            assert inter[0] != inter[1]
+            colinear += 1
+        elif len(inter) == 0:
+            indep += 1
+        else:
+            points = set(itertools.chain(seg1, seg2, inter))
+            assert 1 <= len(points) <= 5
+            if len(points) <= 3:
+                samepoint += 1
+            elif len(points) == 4:
+                online += 1
+            elif len(points) == 5:
+                intersect += 1
+
+    return {"file": file, "segs": len(segs), "length_0": length_0, "horiz": horiz, "vert": vert, "colinear": colinear,
+            "online": online, "samepoint": samepoint, "intersect": intersect, "indep": indep}
+
+
+@cli.command()
+@click.argument("files", required=True, nargs=-1)
+@click.argument("out", required=True, type=click.File(mode="w"))
+def collect(files, out):
+    files = list(parse_files(files, "*.meta.json"))
     w = None
     errors = 0
-    for metafile in tqdm(dir.rglob("*.meta.json")):
+    for metafile in tqdm(files):
         with open(metafile) as f:
             meta = json.load(f)
         if meta.get("exit_code", None) != 0:
