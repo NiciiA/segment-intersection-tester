@@ -1,0 +1,24 @@
+[project]
+name = "segintbench"
+version = "0.1.0"
+description = 'segment intersection benchmarking utils'
+requires-python = ">=3.8"
+authors = [
+  { name = "Simon D Fink", email = "finksim@fim.uni-passau.de" },
+]
+dependencies = [
+  "matplotlib",
+  "numpy",
+  "pandas",
+  "osmnx",
+  "click",
+  "tqdm",
+  "sh",
+  "psutil",
+  "ogdf_python",
+  "tabulate",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

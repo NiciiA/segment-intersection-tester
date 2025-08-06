@@ -70,6 +70,35 @@ EPECK = Exact_predicates_exact_constructions_kernel
 
 ## How to Use It
 
+```bash
+#!/bin/bash
+
+source .venv/bin/activate
+
+pushd generation
+
+  python ./generator.py # standard test generator
+  python ./generate_locations.py # location test generator
+
+  pushd leda
+    ./gen_leda.sh
+  popd
+
+popd # /generation
+
+# TODO msc, GD Contest
+```
+```python
+def do_generation():
+run_in_dir("generation/generator", ["python", "./generation/generator.py"])
+run_in_dir("generation/locations", ["python", "./generation/generate_locations.py"])
+
+def do_testing():
+run_in_dir("testing/tests", ["python", "./tester.py", "run-tests", "./data/segment-intersection-data/tests/*"])
+run_in_dir("testing/loctests", ["python", "./tester.py", "run-tests", "./data/segment-intersection-data/tests_location/*"])
+run_in_dir("testing/collecter", ["python", "./tester.py", "collect", "./out", "results.csv"])
+```
+
 1. **Generate test sets**  
    Run the generator to create test inputs:
    ```bash

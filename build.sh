@@ -9,7 +9,7 @@ git submodule update --init --recursive
 
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r generation/requirements.txt
+pip install -e ./python/
 echo "Don't forget to run \`source .venv/bin/activate!\`"
 
 pushd adapters
@@ -47,7 +47,7 @@ pushd adapters
       -DBUILD_SHARED_LIBS=OFF \
       -DOGDF_MEMORY_MANAGER=POOL_NTS \
       -DOGDF_USE_ASSERT_EXCEPTIONS=OFF \
-      -DCMAKE_CXX_FLAGS="-O2 -march=x86-64 -mno-avx -mno-avx2 -mno-avx512f"
+      -DOGDF_ARCH="x86-64"
 
     cmake --build . --target OGDF -j $(nproc)
 
@@ -71,8 +71,11 @@ pushd adapters
 popd # /adapters
 
 pushd "generation/leda"
-
   cmake .
   cmake --build .
+popd
 
+pushd "generation/ogdf"
+  cmake .
+  cmake --build .
 popd

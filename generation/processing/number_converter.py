@@ -1,14 +1,7 @@
 import argparse
 import pandas as pd
-import struct
 
-
-def float2bin(number, hexdecimal=False, single=False):
-    bytes_data = struct.pack('>f' if single else '>d', number)
-    func, length = (hex, 2) if hexdecimal else (bin, 8)
-    byte2bin = lambda byte: func(byte)[2:].rjust(length, '0')
-    return ''.join(map(byte2bin, bytes_data))
-
+from segintbench.utils import float2bin
 
 def convert_csv_to_binary(input_path, output_path):
     # Load input CSV with ';' as delimiter

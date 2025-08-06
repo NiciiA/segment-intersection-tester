@@ -1,16 +1,3 @@
-// for f in msc-graphstudy/data/layouts/**/*.xml.gz; do
-//     d="$(basename $(dirname $f))-$(basename $f).csv"
-//     if [[ -s $d ]]; then
-//         echo "skipping $d"
-//     else
-//         echo "processing $d"
-//         # python segment-intersection/generation/ogdf_converter.py $f > $d
-//         segment-intersection/generation/leda/ogdf_to_segint $f > $d
-//     fi
-// done
-
-
-
 #include <ogdf/basic/Graph.h>
 #include <ogdf/basic/GraphAttributes.h>
 #include <ogdf/fileformats/GraphIO.h>
@@ -60,6 +47,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    cout << "x1;y1;x2;y2" << endl;
     for (edge e : G.edges) {
         cout << GA.x(e->source()) << ";" << GA.y(e->source()) << ";" << GA.x(e->target()) << ";" << GA.y(e->target())
              << endl;

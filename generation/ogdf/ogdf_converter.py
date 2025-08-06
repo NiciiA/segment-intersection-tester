@@ -1,6 +1,7 @@
 import click
 from ogdf_python import *
 
+# this implementation is too slow when processing many files, so we switched to C++
 
 @click.command()
 @click.argument('file', type=click.Path(exists=True, dir_okay=False))
@@ -20,6 +21,7 @@ def parse(file):
     else:
         ogdf.GraphIO.read(GA, G, file)
 
+    print("x1;y1;x2;y2")
     for e in G.edges:
         print(";".join(map(str, (GA.x[e.source()], GA.y[e.source()], GA.x[e.target()], GA.y[e.target()]))))
 

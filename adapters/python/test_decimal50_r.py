@@ -1,6 +1,6 @@
 from decimal import Decimal, getcontext
 
-from utils import *
+from segintbench.run import *
 
 getcontext().prec = 50
 

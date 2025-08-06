@@ -1,8 +1,9 @@
 import warnings
+from itertools import starmap
 
 from SweepIntersectorLib.SweepIntersector import SweepIntersector
 
-from utils import *
+from segintbench.run import *
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -10,7 +11,9 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 def postprocess(intersections):
     unique_intersections = set()
     for seg, intersections in intersections.items():
-        unique_intersections.update(intersections[1:-1])
+        # intersections includes start and end points of seg
+        unique_intersections.update(starmap(Point,intersections[1:-1]))
+    return unique_intersections
 
 
 isector = SweepIntersector()

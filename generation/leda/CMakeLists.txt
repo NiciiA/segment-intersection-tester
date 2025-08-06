@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(SegGen)
+project(SegGen-LEDA)
 set(CMAKE_CXX_STANDARD 20)
 
 #cmake_policy(SET CMP0167 NEW) # use non-vendored findBoost on too new CMake versions
@@ -56,4 +56,3 @@ add_gen_executable(gen_leda_circle_segments DEFINES LIBS LEDA)
 add_gen_executable(gen_leda_geo_sweep_intersection_time DEFINES LIBS LEDA)
 
 ########################################################################################################################
-

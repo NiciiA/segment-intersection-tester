@@ -1,6 +1,7 @@
 build-*/
 cmake-build-*/
 /adapters/deps/leda/
+/data/
 
 *.ninja
 .cmake/

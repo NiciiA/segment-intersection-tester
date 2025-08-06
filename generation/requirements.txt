@@ -1,8 +1,0 @@
-matplotlib
-numpy
-pandas
-osmnx
-click
-tqdm
-sh
-psutil
