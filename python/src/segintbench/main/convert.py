@@ -14,7 +14,7 @@ def cli():
 @cli.command()
 @click.argument('input', type=click.File('rt'))
 @click.argument('output', type=click.File('wt'))
-@click.argument('--binary', '-b', type=bool)
+@click.option('--binary', '-b', type=bool)
 def from_json(input, output, binary):
     data = json.load(input)
     nodes = {n["id"]: Point(n["x"], n["y"]) for n in data["nodes"]}

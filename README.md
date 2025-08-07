@@ -73,28 +73,26 @@ EPECK = Exact_predicates_exact_constructions_kernel
 ```bash
 source .venv/bin/activate
 
-segintbench-generate generate-locations
-segintbench-generate generate-testcases
-pushd generation/leda
-    ./gen_leda.sh
-popd
+segintbench-generate generate-locations -o tests/locations
+segintbench-generate generate-testcases -o tests
+generation/leda/gen_leda.sh # tests is hardcoded
 
 ## msc-graphstudy and GD contest files are available statically,
-## but could be obtained as follows:
+## but could be obtained using the following:
 # generation/ogdf/convert_msc_ogdf.sh
 # segintbench-convert from-json --binary gdcontest24/automatic-1.json tests/gdcontest24/automatic-1.csv
 
-segintbench-test file-stats tests
+segintbench-test file-stats tests stats.csv
 segintbench-test run-tests --print-adapters tests
 
-segintbench-test run-tests tests --timeout "10:00" --memory-limit 1024
-segintbench-test run-tests tests --print-intersections --timeout "10:00" --memory-limit 1024
+segintbench-test run-tests tests --out ./out --timeout "10:00" --memory-limit 1024
+segintbench-test run-tests tests --out ./out-intersections --print-intersections --timeout "10:00" --memory-limit 1024
 
 segintbench-test collect ./out results-runtime.csv
 segintbench-test collect ./out-intersections results-intersections.csv
 
-segintbench-test summarize results-runtime.csv --key time
-segintbench-test summarize results-intersections.csv --key result
+segintbench-test summarize results-runtime.csv summary-runtime.md --key time
+segintbench-test summarize results-intersections.csv summary-intersections.md --key result
 ```
 
 1. **Generate test sets**  

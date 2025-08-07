@@ -1,10 +1,9 @@
+import concurrent
 import functools
-import re
 import json
+from concurrent.futures import ThreadPoolExecutor
 
-import click
 from tqdm import tqdm
-from tqdm.contrib.concurrent import thread_map
 
 from segintbench.testcases import CONFIGURATIONS
 from segintbench.utils import *
@@ -15,15 +14,16 @@ def cli():
     pass
 
 
-def process_configuration(config, *, output_dir, force):
-    func, params, filename, category = config
+def process_configuration(func, params, filename, category, *, output_dir, force, pb):
     filepath = Path(output_dir) / category / filename
     if filepath.is_file() and not force:
-        tqdm.write(f"skipped: {filepath}")
+        pb.write(f"skipped: {filepath}")
     else:
+        pb.write(f"started: {category}/{filename}")
         segments = func(*params)
         write_segments_to_csv(segments, filepath)
-        tqdm.write(f"done: {filename}")
+        pb.write(f"done: {category}/{filename}")
+    pb.update()
 
 
 @cli.command()
@@ -32,14 +32,32 @@ def process_configuration(config, *, output_dir, force):
 @click.option("--include", default=None)
 @click.option("--exclude", default=None)
 @click.option("--force", default=False)
+@click.option("--timeout", default=None, type=parse_timeout)
 @click.option("--parallelism", "-p", default=os.cpu_count() - 1)
-def generate_testcases(include, exclude, parallelism, **kwargs):
+def generate_testcases(include, exclude, parallelism, timeout, **kwargs):
     incl_re = re.compile(include) if include else None
     excl_re = re.compile(exclude) if exclude else None
-    thread_map(functools.partial(process_configuration, **kwargs), [
-        c for c in CONFIGURATIONS if
-        (not include or incl_re.match(f"{c[3]}/{c[2]}")) and (not exclude or not excl_re.match(f"{c[3]}/{c[2]}"))
-    ], max_workers=parallelism or None)
+    configs = [c for c in CONFIGURATIONS if
+               (not include or incl_re.match(f"{c[3]}/{c[2]}")) and (
+                           not exclude or not excl_re.match(f"{c[3]}/{c[2]}"))]
+
+    with tqdm(total=len(configs)) as pb:
+        with ThreadPoolExecutor(max_workers=parallelism or None) as ex:
+            fn = functools.partial(process_configuration, pb=pb, **kwargs)
+            fs = [ex.submit(fn, *config) for config in configs]
+            while fs:
+                res = concurrent.futures.wait(fs, timeout=timeout, return_when=concurrent.futures.FIRST_COMPLETED)
+                if not res.done:
+                    for future in fs:
+                        future.cancel()
+                    raise click.ClickException(f"Timeout reached! {len(res.not_done)} pending tasks: {res.not_done}")
+                else:
+                    for future in res.done:
+                        try:
+                            future.result(0)  # This will raise an exception if the task failed
+                        except Exception as e:
+                            print(f"An error occurred: {e}")
+                    fs = res.not_done
 
 
 def extract_segments_from_geojson(filepath: str):

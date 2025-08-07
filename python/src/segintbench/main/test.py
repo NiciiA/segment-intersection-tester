@@ -1,20 +1,18 @@
+import concurrent
 import csv
 import datetime
 import functools
 import getpass
 import json
-import re
 import resource
 import socket
 import sys
-import time
 import traceback
 from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor
 from fractions import Fraction
 from itertools import product
 
-import click
 import sh
 from tqdm import tqdm
 from tqdm.contrib.concurrent import thread_map
@@ -23,30 +21,6 @@ from segintbench.utils import *
 
 hostname = socket.gethostname()
 username = getpass.getuser()
-
-
-def parse_timeout(val):
-    if isinstance(val, str):
-        try:
-            return int(val)
-        except ValueError:
-            t = time.fromisoformat(val)
-            return ((t.hour * 60) + t.minute) * 60 + t.second
-    else:
-        return val
-
-
-def parse_files(files, default_ext):
-    for file in files:
-        path = Path(file)
-        if path.is_file():
-            yield path
-        elif path.is_dir():
-            yield from path.rglob(default_ext)
-        elif re.search(r"[*?\[]", file):
-            yield from Path('.').glob(file)
-        else:
-            raise click.UsageError(f"Invalid file/directory: {file}")
 
 
 @click.group()
@@ -70,14 +44,14 @@ def cli():
               help="Maximum memory per test process (in MB)")
 def run_tests(commands, files, parallelism, print_adapters, adapters_dir, **kwargs):
     """Locally run one or more adapter on a given set of files"""
-    files = list(parse_files(files, "*.csv"))
+    files = [f.absolute() for f in parse_files(files, "*.csv")]
     if not kwargs.get("outstem", ""):
         kwargs["outstem"] = Path(os.path.commonpath(Path(f).parent for f in files)).resolve()
     if not kwargs.get("outdir", ""):
-        if not kwargs.get("print_intersections", True):
-            kwargs["outdir"] = "./out-intersections"
+        if kwargs.get("print_intersections", False):
+            kwargs["outdir"] = Path("./out-intersections")
         else:
-            kwargs["outdir"] = "./out"
+            kwargs["outdir"] = Path("./out")
 
     if not commands or print_adapters:
         adapters_dir = Path(adapters_dir or f"{__file__}/../../../../../adapters").resolve()
@@ -102,10 +76,11 @@ def run_tests(commands, files, parallelism, print_adapters, adapters_dir, **kwar
 def test_one(args, *, print_intersections, force, retry_failed, timeout, outdir, outstem, memory_limit):
     command, file = args
     command_file = Path(command.split(" ")[-1])  # simple heuristic that works for all commands above
-    outpath = Path(outdir) / command_file.name / Path(file).relative_to(outstem).with_suffix(".out.csv")
-    errpath = outpath.with_suffix(".err.txt")
-    timepath = outpath.with_suffix(".time.txt")
-    metapath = outpath.with_suffix(".meta.json")
+    basepath = Path(outdir).absolute() / command_file.name / Path(file).relative_to(outstem)
+    outpath = basepath.with_suffix(".out.csv")
+    errpath = basepath.with_suffix(".err.txt")
+    timepath = basepath.with_suffix(".time.txt")
+    metapath = basepath.with_suffix(".meta.json")
     if not force and outpath.exists() and metapath.exists() and (not retry_failed or not errpath.exists()):
         tqdm.write(f"Skipping {file} as output {outpath} already exists")
         return
@@ -129,7 +104,7 @@ def test_one(args, *, print_intersections, force, retry_failed, timeout, outdir,
         "starttime": datetime.datetime.now().isoformat(),
         "host": hostname,
         "user": username,
-        "input": file,
+        "input": str(file),
         "command": command,
         "time": str(timepath),
         "output": str(outpath),
@@ -165,20 +140,38 @@ def test_one(args, *, print_intersections, force, retry_failed, timeout, outdir,
 @cli.command()
 @click.argument("files", required=True, nargs=-1)
 @click.argument("out", required=True, type=click.File(mode="w"))
+@click.option("--timeout", default=None, type=parse_timeout)
 @click.option("--parallelism", "-p", default=os.cpu_count() - 1)
-def file_stats(files, out, parallelism):
+def file_stats(files, out, timeout, parallelism):
     files = list(parse_files(files, "*.csv"))
-    with ProcessPoolExecutor(max_workers=parallelism or None) as ex:
-        w = None
-        for row in tqdm(ex.map(stat_one_file, files), total=len(files)):
-            if not w:
-                w = csv.DictWriter(out, row.keys())
-                w.writeheader()
-            w.writerow(row)
+    w = None
+    with tqdm(total=len(files)) as pb:
+        with ProcessPoolExecutor(max_workers=parallelism or None) as ex:
+            fs = [ex.submit(stat_one_file, f) for f in files]
+            while fs:
+                res = concurrent.futures.wait(fs, timeout=timeout, return_when=concurrent.futures.FIRST_COMPLETED)
+                if not res.done:
+                    for future in fs:
+                        future.cancel()
+                    raise click.ClickException(f"Timeout reached! {len(res.not_done)} pending tasks: {res.not_done}")
+                else:
+                    for future in res.done:
+                        try:
+                            row = future.result(0)  # This will raise an exception if the task failed
+                            if not w:
+                                w = csv.DictWriter(out, row.keys())
+                                w.writeheader()
+                            w.writerow(row)
+                        except Exception as e:
+                            print(f"An error occurred: {e}")
+                        pb.update(len(res.done))
+                    fs = res.not_done
 
 
 def stat_one_file(file):
+    tqdm.write(f"start: {file}")
     segs = list(read_segments_from_csv(file))
+    n = len(segs)
 
     length_0 = horiz = vert = 0
     points = set()
@@ -193,8 +186,9 @@ def stat_one_file(file):
 
     colinear = online = samepoint = intersect = indep = 0
     inter_points = set()
-    for seg1, seg2 in itertools.combinations(segs, 2):
-        inter = list(find_intersection(seg1, seg2, conv=Fraction))
+    for seg1, seg2 in tqdm(itertools.combinations([s.map(Fraction) for s in segs], 2), total=n * (n - 1) // 2,
+                           desc=str(file)):
+        inter = list(find_intersection(seg1, seg2))
         assert len(inter) <= 2
         if len(inter) == 2:
             assert inter[0] != inter[1]
@@ -212,7 +206,7 @@ def stat_one_file(file):
             elif len(ps) == 5:
                 intersect += 1
 
-    n = len(segs)
+    tqdm.write(f"done: {file}")
     return {"file": file, "segs": n, "combs": n * (n - 1) // 2,
             "points": len(points), "intersection_points": len(inter_points),
             "true_intersection_points": len(inter_points - points),
@@ -230,28 +224,30 @@ def collect(files, out):
     for metafile in tqdm(files):
         with open(metafile) as f:
             meta = json.load(f)
-        if meta.get("exit_code", None) != 0:
-            tqdm.write(f"Failed run in {metafile}: {meta}", file=sys.stderr)
-            errors += 1
         for k in ["result", "time", "memory", "uniqfile", "uniqfile_stat", "uniqfile_md5"]:
             meta[k] = None
-        try:
-            if meta.get("print_intersections", True):
-                segs = set(read_segments_from_csv(meta["output"]))
-                meta["result"] = len(segs)
-                if segs:
-                    uniqfile = Path(meta["output"]).with_suffix(".uniq.csv")
-                    write_segments_to_csv(sorted(segs), uniqfile, binary_encode=False)
-                    meta["uniqfile"] = str(uniqfile)
-                    meta["uniqfile_stat"] = tuple(uniqfile.stat())
-                    meta["uniqfile_md5"] = sh.md5sum(uniqfile)
-            else:
-                with open(meta["output"]) as f:
-                    meta["result"], meta["time"], meta["memory"] = map(int, f.readlines())
-        except Exception as e:
-            msg = '\n\t'.join(traceback.format_exception_only(e)).strip()
-            tqdm.write(f"Error reading output for {metafile}: {msg}", file=sys.stderr)
+        if meta.get("exit_code", None) != 0:
+            tqdm.write(f"Failed run in {metafile} with exit code {meta.get('exit_code', None)}", file=sys.stderr)
             errors += 1
+        else:
+            try:
+                if meta.get("print_intersections", True):
+                    segs = set(read_segments_from_csv(meta["output"]))
+                    meta["result"] = len(segs)
+                    if segs:
+                        uniqfile = Path(meta["output"]).with_suffix(".uniq.csv")
+                        write_segments_to_csv(sorted(segs), uniqfile, binary_encode=False)
+                        meta["uniqfile"] = str(uniqfile)
+                        meta["uniqfile_stat"] = tuple(uniqfile.stat())
+                        meta["uniqfile_md5"] = sh.md5sum(uniqfile)
+                else:
+                    with open(meta["output"]) as f:
+                        meta["result"], meta["time"], meta["memory"] = map(int, f.readlines())
+
+            except Exception as e:
+                msg = '\n\t'.join(traceback.format_exception_only(e)).strip()
+                tqdm.write(f"Error reading output for {metafile}: {msg}", file=sys.stderr)
+                errors += 1
 
         if not w:
             w = csv.DictWriter(out, meta.keys())
@@ -263,20 +259,18 @@ def collect(files, out):
 
 
 @cli.command()
-@click.argument("csv", required=True, type=click.Path(exists=True, file_okay=True, dir_okay=False, resolve_path=True))
-@click.argument("out", required=True, type=click.File(mode="w"))
+@click.argument("file", required=True, type=click.File('rt'))
+@click.argument("out", required=True, type=click.File('wt'))
 @click.option("--tablefmt", "-f", default="github")
 @click.option("--key", "-k", default="result")
 @click.option("--missing", "-m", default="")
-def summarize(csv, out, tablefmt, key, missing):
+def summarize(file, out, tablefmt, key, missing):
     summary = defaultdict(dict)
-    with open(csv, newline='') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            summary[row["input"]][row["command"]] = str(row[key])
+    for row in csv.DictReader(file):
+        summary[row["input"]][row["command"]] = str(row[key])
 
     sorted_inputs = sorted(summary.keys())
-    full_commands = set(v.keys() for v in summary.values())
+    full_commands = set(itertools.chain.from_iterable(v.keys() for v in summary.values()))
     sorted_full_commands = sorted(full_commands)
 
     table = []

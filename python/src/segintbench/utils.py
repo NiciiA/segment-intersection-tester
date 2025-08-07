@@ -1,9 +1,13 @@
 import itertools
 import math
 import os
+import re
+from datetime import time
 from collections import namedtuple
 from pathlib import Path
 from typing import NamedTuple
+
+import click
 
 Point = namedtuple('Point', 'x y')
 
@@ -101,21 +105,20 @@ def find_intersection(seg1, seg2, epsilon=None, conv=lambda x: x):
 
 # Function to find collinear intersections
 def find_collinear_intersections(seg1, seg2, conv=lambda x: x):
-    pconv = lambda p: Point(conv(p.x), conv(p.y))
-    points1 = sorted(map(pconv, [seg1.p1, seg1.p2]), key=lambda p: (p.x, p.y))
-    points2 = sorted(map(pconv, [seg2.p1, seg2.p2]), key=lambda p: (p.x, p.y))
+    points1 = sorted([seg1.p1, seg1.p2])
+    points2 = sorted([seg2.p1, seg2.p2])
 
     if points1[1].x < points2[0].x or points2[1].x < points1[0].x:
         return
 
-    overlap_start = max(points1[0], points2[0], key=lambda p: (p.x, p.y))
-    overlap_end = min(points1[1], points2[1], key=lambda p: (p.x, p.y))
+    overlap_start = max(points1[0], points2[0])
+    overlap_end = min(points1[1], points2[1])
 
     if overlap_start == overlap_end:
-        yield overlap_start
+        yield conv(overlap_start)
     else:
-        yield overlap_start
-        yield overlap_end
+        yield conv(overlap_start)
+        yield conv(overlap_end)
 
 
 # Function to calculate intersections for all segment pairs
@@ -141,11 +144,13 @@ def float2bin(number: float, as_hex: bool = False, single_precision: bool = Fals
     return ''.join(base(b)[2:].rjust(width, '0') for b in packed)
 
 
-def write_segments_to_csv(segments, output_path: str, binary_encode=True):
+def write_segments_to_csv(segments, file: str, binary_encode=True):
     """Write segments to a CSV with optional binary-encoded float values."""
     import csv
-    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, 'w', newline='') as csvfile:
+    if isinstance(file, (str, Path)):
+        Path(file).parent.mkdir(parents=True, exist_ok=True)
+        file = open(file, 'w', newline='')
+    with file as csvfile:
         writer = csv.writer(csvfile, delimiter=";")
         writer.writerow(['x1', 'y1', 'x2', 'y2'])
 
@@ -157,9 +162,35 @@ def write_segments_to_csv(segments, output_path: str, binary_encode=True):
 
 
 def read_segments_from_csv(file: str, decode=bin2float):
-    with open(file, 'r') as file:
-        header = next(file).strip()
+    if isinstance(file, (str, Path)):
+        file = open(file, 'r')
+    with file as csvfile:
+        header = next(csvfile).strip()
         if header != "x1;y1;x2;y2":  # Skip the header line
             raise IOError(f"Invalid CSV header {header!r}.")
-        for line in file:
+        for line in csvfile:
             yield Segment.build(map(decode, line.strip().split(';')))
+
+
+def parse_timeout(val):
+    if isinstance(val, str):
+        try:
+            return int(val)
+        except ValueError:
+            t = time.fromisoformat(val)
+            return ((t.hour * 60) + t.minute) * 60 + t.second
+    else:
+        return val
+
+
+def parse_files(files, default_ext):
+    for file in files:
+        path = Path(file)
+        if path.is_file():
+            yield path
+        elif path.is_dir():
+            yield from path.rglob(default_ext)
+        elif re.search(r"[*?\[]", file):
+            yield from Path('.').glob(file)
+        else:
+            raise click.UsageError(f"Invalid file/directory: {file}")

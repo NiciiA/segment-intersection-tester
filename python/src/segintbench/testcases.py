@@ -449,7 +449,7 @@ def star_intersections_shaped_r(num_segments: int, max_coord: float, skip: int):
     return segments
 
 
-def star_intersections_9(num_segments: int, num_intersections: int, max_coord: float):
+def star_intersections_9(num_segments: int, num_intersections: int, max_coord: float, max_iter: int = 1000):
     segments = []
 
     # Generate equally spaced y-coordinates for horizontal segments
@@ -482,6 +482,10 @@ def star_intersections_9(num_segments: int, num_intersections: int, max_coord: f
             segments[j] = original_segment_j
         else:
             intersections = new_intersections
+
+        max_iter -= 1
+        if max_iter <= 0:
+            break
 
     return segments
 
@@ -1441,47 +1445,47 @@ CONFIGURATIONS = [
     # (rounding, (4500, 12345678901234567890, 10000), "rounding_l_4500.csv"),
     (rounding_y, (5000, 12345678901234567890, 10000), "rounding_y_l_5000.csv", "rounding"),
 
-    (star_intersections_9, (500, 250, 1234567890), "star_intersections_9_500.csv", "performance"),
-    (star_intersections_9, (1000, 500, 1234567890), "star_intersections_9_1000.csv", "performance"),
-    (star_intersections_9, (1500, 750, 1234567890), "star_intersections_9_1500.csv", "performance"),
-    (star_intersections_9, (2000, 1000, 1234567890), "star_intersections_9_2000.csv", "performance"),
-    (star_intersections_9, (2500, 1250, 1234567890), "star_intersections_9_2500.csv", "performance"),
-    (star_intersections_9, (3000, 1500, 1234567890), "star_intersections_9_3000.csv", "performance"),
-    (star_intersections_9, (3500, 1750, 1234567890), "star_intersections_9_3500.csv", "performance"),
-    (star_intersections_9, (4000, 2000, 1234567890), "star_intersections_9_4000.csv", "performance"),
-    (star_intersections_9, (4500, 2250, 1234567890), "star_intersections_9_4500.csv", "performance"),
-    (star_intersections_9, (5000, 2500, 1234567890), "star_intersections_9_5000.csv", "performance"),
-    (star_intersections_9, (5500, 2750, 1234567890), "star_intersections_9_5500.csv", "performance"),
-    (star_intersections_9, (6000, 3000, 1234567890), "star_intersections_9_6000.csv", "performance"),
-    (star_intersections_9, (6500, 3250, 1234567890), "star_intersections_9_6500.csv", "performance"),
-    (star_intersections_9, (7000, 3500, 1234567890), "star_intersections_9_7000.csv", "performance"),
-    (star_intersections_9, (7500, 3750, 1234567890), "star_intersections_9_7500.csv", "performance"),
-    # (star_intersections_9, (8000, 4000, 1234567890), "star_intersections_9_8000.csv"),
-    # (star_intersections_9, (8500, 4250, 1234567890), "star_intersections_9_8500.csv"),
-    # (star_intersections_9, (9000, 4500, 1234567890), "star_intersections_9_9000.csv"),
-    # (star_intersections_9, (9500, 4750, 1234567890), "star_intersections_9_9500.csv"),
-    # (star_intersections_9, (10000, 5000, 1234567890), "star_intersections_9_10000.csv"),
-
-    (star_intersections_9, (500, 1500, 1234567890), "star_intersections_10_500.csv", "performance"),
-    (star_intersections_9, (1000, 3000, 1234567890), "star_intersections_10_1000.csv", "performance"),
-    (star_intersections_9, (1500, 4500, 1234567890), "star_intersections_10_1500.csv", "performance"),
-    (star_intersections_9, (2000, 6000, 1234567890), "star_intersections_10_2000.csv", "performance"),
-    (star_intersections_9, (2500, 7500, 1234567890), "star_intersections_10_2500.csv", "performance"),
-    (star_intersections_9, (3000, 9000, 1234567890), "star_intersections_10_3000.csv", "performance"),
-    (star_intersections_9, (3500, 10500, 1234567890), "star_intersections_10_3500.csv", "performance"),
-    (star_intersections_9, (4000, 12000, 1234567890), "star_intersections_10_4000.csv", "performance"),
-    (star_intersections_9, (4500, 13500, 1234567890), "star_intersections_10_4500.csv", "performance"),
-    (star_intersections_9, (5000, 15000, 1234567890), "star_intersections_10_5000.csv", "performance"),
-    (star_intersections_9, (5500, 16500, 1234567890), "star_intersections_10_5500.csv", "performance"),
-    (star_intersections_9, (6000, 18000, 1234567890), "star_intersections_10_6000.csv", "performance"),
-    (star_intersections_9, (6500, 19500, 1234567890), "star_intersections_10_6500.csv", "performance"),
-    (star_intersections_9, (7000, 21000, 1234567890), "star_intersections_10_7000.csv", "performance"),
-    (star_intersections_9, (7500, 22500, 1234567890), "star_intersections_10_7500.csv", "performance"),
-    # (star_intersections_9, (8000, 24000, 1234567890), "star_intersections_10_8000.csv"),
-    # (star_intersections_9, (8500, 25500, 1234567890), "star_intersections_10_8500.csv"),
-    # (star_intersections_9, (9000, 27000, 1234567890), "star_intersections_10_9000.csv"),
-    # (star_intersections_9, (9500, 28500, 1234567890), "star_intersections_10_9500.csv"),
-    # (star_intersections_9, (10000, 30000, 1234567890), "star_intersections_10_10000.csv"),
+    # (star_intersections_9, (500, 250, 1234567890), "star_intersections_9_500.csv", "performance"),
+    # (star_intersections_9, (1000, 500, 1234567890), "star_intersections_9_1000.csv", "performance"),
+    # (star_intersections_9, (1500, 750, 1234567890), "star_intersections_9_1500.csv", "performance"),
+    # (star_intersections_9, (2000, 1000, 1234567890), "star_intersections_9_2000.csv", "performance"),
+    # (star_intersections_9, (2500, 1250, 1234567890), "star_intersections_9_2500.csv", "performance"),
+    # (star_intersections_9, (3000, 1500, 1234567890), "star_intersections_9_3000.csv", "performance"),
+    # (star_intersections_9, (3500, 1750, 1234567890), "star_intersections_9_3500.csv", "performance"),
+    # (star_intersections_9, (4000, 2000, 1234567890), "star_intersections_9_4000.csv", "performance"),
+    # (star_intersections_9, (4500, 2250, 1234567890), "star_intersections_9_4500.csv", "performance"),
+    # (star_intersections_9, (5000, 2500, 1234567890), "star_intersections_9_5000.csv", "performance"),
+    # (star_intersections_9, (5500, 2750, 1234567890), "star_intersections_9_5500.csv", "performance"),
+    # (star_intersections_9, (6000, 3000, 1234567890), "star_intersections_9_6000.csv", "performance"),
+    # (star_intersections_9, (6500, 3250, 1234567890), "star_intersections_9_6500.csv", "performance"),
+    # (star_intersections_9, (7000, 3500, 1234567890), "star_intersections_9_7000.csv", "performance"),
+    # (star_intersections_9, (7500, 3750, 1234567890), "star_intersections_9_7500.csv", "performance"),
+    # # (star_intersections_9, (8000, 4000, 1234567890), "star_intersections_9_8000.csv"),
+    # # (star_intersections_9, (8500, 4250, 1234567890), "star_intersections_9_8500.csv"),
+    # # (star_intersections_9, (9000, 4500, 1234567890), "star_intersections_9_9000.csv"),
+    # # (star_intersections_9, (9500, 4750, 1234567890), "star_intersections_9_9500.csv"),
+    # # (star_intersections_9, (10000, 5000, 1234567890), "star_intersections_9_10000.csv"),
+    #
+    # (star_intersections_9, (500, 1500, 1234567890), "star_intersections_10_500.csv", "performance"),
+    # (star_intersections_9, (1000, 3000, 1234567890), "star_intersections_10_1000.csv", "performance"),
+    # (star_intersections_9, (1500, 4500, 1234567890), "star_intersections_10_1500.csv", "performance"),
+    # (star_intersections_9, (2000, 6000, 1234567890), "star_intersections_10_2000.csv", "performance"),
+    # (star_intersections_9, (2500, 7500, 1234567890), "star_intersections_10_2500.csv", "performance"),
+    # (star_intersections_9, (3000, 9000, 1234567890), "star_intersections_10_3000.csv", "performance"),
+    # (star_intersections_9, (3500, 10500, 1234567890), "star_intersections_10_3500.csv", "performance"),
+    # (star_intersections_9, (4000, 12000, 1234567890), "star_intersections_10_4000.csv", "performance"),
+    # (star_intersections_9, (4500, 13500, 1234567890), "star_intersections_10_4500.csv", "performance"),
+    # (star_intersections_9, (5000, 15000, 1234567890), "star_intersections_10_5000.csv", "performance"),
+    # (star_intersections_9, (5500, 16500, 1234567890), "star_intersections_10_5500.csv", "performance"),
+    # (star_intersections_9, (6000, 18000, 1234567890), "star_intersections_10_6000.csv", "performance"),
+    # (star_intersections_9, (6500, 19500, 1234567890), "star_intersections_10_6500.csv", "performance"),
+    # (star_intersections_9, (7000, 21000, 1234567890), "star_intersections_10_7000.csv", "performance"),
+    # (star_intersections_9, (7500, 22500, 1234567890), "star_intersections_10_7500.csv", "performance"),
+    # # (star_intersections_9, (8000, 24000, 1234567890), "star_intersections_10_8000.csv"),
+    # # (star_intersections_9, (8500, 25500, 1234567890), "star_intersections_10_8500.csv"),
+    # # (star_intersections_9, (9000, 27000, 1234567890), "star_intersections_10_9000.csv"),
+    # # (star_intersections_9, (9500, 28500, 1234567890), "star_intersections_10_9500.csv"),
+    # # (star_intersections_9, (10000, 30000, 1234567890), "star_intersections_10_10000.csv"),
 
     # star_intersections_11 calls
     # (star_intersections_11, (500, 10000), "star_intersections_11_s_500.csv"),
