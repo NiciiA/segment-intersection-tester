@@ -33,9 +33,21 @@ void process_line(const std::string& x1, const std::string& y1, const std::strin
 		const std::string& y2) {
 	LineString lineString;
 	bg::append(lineString, Boost_Point(PARSE(x1), PARSE(y1)));
-	bg::append(lineString, Boost_Point(PARSE(y2), PARSE(y2)));
+	bg::append(lineString, Boost_Point(PARSE(x2), PARSE(y2)));
 	boost_segments.push_back(lineString);
 }
+
+void echo_segments() {
+	for (const auto& seg : boost_segments) {
+		std::cout
+		<< seg.front().get<0>() << ";"
+		<< seg.front().get<1>() << ";"
+		<< seg.back().get<0>() << ";"
+		<< seg.back().get<1>()
+		<< std::endl;
+	}
+}
+
 
 template<bool print>
 size_t compute_crossings() {

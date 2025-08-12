@@ -23,11 +23,24 @@ using namespace geos::algorithm;
 std::vector<SegmentString*> segments;
 
 void process_line(const std::string& x1, const std::string& y1, const std::string& x2,
-		const std::string& y2) {
+                  const std::string& y2) {
 	segments.push_back(new BasicSegmentString(
-			new CoordinateSequence({Coordinate(bitstring_to_double(x1), bitstring_to_double(y1)),
-					Coordinate(bitstring_to_double(x2), bitstring_to_double(y2))}), nullptr));
+		new CoordinateSequence({Coordinate(bitstring_to_double(x1), bitstring_to_double(y1)),
+		                        Coordinate(bitstring_to_double(x2), bitstring_to_double(y2))}),
+		nullptr));
 }
+
+void echo_segments() {
+	for (const auto& s : segments) {
+		std::cout
+				<< s->getCoordinate(0).x << ";"
+				<< s->getCoordinate(0).y << ";"
+				<< s->getCoordinate(1).x << ";"
+				<< s->getCoordinate(1).y
+				<< std::endl;
+	}
+}
+
 
 template<bool print>
 size_t compute_crossings() {

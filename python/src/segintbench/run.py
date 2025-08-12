@@ -1,4 +1,5 @@
 import argparse
+import sys
 import time
 
 from segintbench.utils import *
@@ -9,6 +10,7 @@ def main(parse_bin, calculate_intersections, postprocess=None):
     parser = argparse.ArgumentParser(description="Process a CSV file.")
     parser.add_argument('-f', '--file', required=True, help='Path to the CSV file')
     parser.add_argument('-a', '--accuracy', action='store_true', help='Print intersections if this flag is set')
+    parser.add_argument('-e', '--echo', action='store_true', help='Print parsed coordinates for parser validation')
 
     args = parser.parse_args()
     filepath = args.file
@@ -24,6 +26,10 @@ def main(parse_bin, calculate_intersections, postprocess=None):
 
     # Read and parse segments from the file
     segments = list(read_segments_from_csv(filepath, decode=parse_bin))
+
+    if args.echo:
+        write_segments_to_csv(segments, sys.stdout, False)
+        return 1
 
     # Main execution
     initial_memory = get_memory_usage()

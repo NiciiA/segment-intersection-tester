@@ -24,3 +24,14 @@ void process_line(const std::string& x1, const std::string& y1, const std::strin
 			CGAL_Segment(CGAL_Point(bitstring_to_double(x1), bitstring_to_double(y1)),
 					CGAL_Point(bitstring_to_double(x2), bitstring_to_double(y2))));
 }
+
+void echo_segments() {
+	for (const auto& seg : cgal_segments) {
+		std::cout
+		<< seg.start().x() << ";"
+		<< seg.start().y() << ";"
+		<< seg.end().x() << ";"
+		<< seg.end().y()
+		<< std::endl;
+	}
+}

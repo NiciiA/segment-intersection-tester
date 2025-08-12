@@ -2,7 +2,6 @@ import itertools
 import math
 import os
 import re
-from datetime import time
 from collections import namedtuple
 from pathlib import Path
 from typing import NamedTuple
@@ -177,6 +176,7 @@ def parse_timeout(val):
         try:
             return int(val)
         except ValueError:
+            from datetime import time
             t = time.fromisoformat(val)
             return ((t.hour * 60) + t.minute) * 60 + t.second
     else:

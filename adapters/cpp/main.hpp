@@ -33,15 +33,19 @@ long getMemoryUsageKB() {
 int main(int argc, char* argv[]) {
 	std::string file_path;
 	bool print_intersections = false;
+	bool echo = false;
 	int opt;
 
-	while ((opt = getopt(argc, argv, "f:a")) != -1) {
+	while ((opt = getopt(argc, argv, "f:ae")) != -1) {
 		switch (opt) {
 		case 'f':
 			file_path = optarg;
 			break;
 		case 'a':
 			print_intersections = true;
+			break;
+		case 'e':
+			echo = true;
 			break;
 		default:
 			std::cerr << "Usage: " << argv[0] << " -f <file_path>\n";
@@ -79,6 +83,12 @@ int main(int argc, char* argv[]) {
 	}
 
 	file.close();
+
+	if (echo) {
+		std::cout << "x1;y1;x2;y2" << std::endl;
+		echo_segments();
+		return 1;
+	}
 
 	long initial_memory = getMemoryUsageKB();
 	auto start = std::chrono::high_resolution_clock::now();

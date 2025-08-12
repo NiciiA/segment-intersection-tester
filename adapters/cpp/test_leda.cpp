@@ -33,6 +33,18 @@ void process_line(const std::string& x1, const std::string& y1, const std::strin
 	segments.push_back(SEGMENT(POINT(PARSE(x1), PARSE(y1)), POINT(PARSE(x2), PARSE(y2))));
 }
 
+void echo_segments() {
+	for (const auto& seg : segments) {
+		std::cout
+		<< seg.start().X() << ";"
+		<< seg.start().Y() << ";"
+		<< seg.end().X() << ";"
+		<< seg.end().Y()
+		<< std::endl;
+	}
+}
+
+
 void check_intersection(const SEGMENT& a, const SEGMENT& b) {
 #ifdef RATIONAL
 	SEGMENT inter;

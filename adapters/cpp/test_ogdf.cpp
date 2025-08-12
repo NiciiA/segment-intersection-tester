@@ -11,7 +11,7 @@ Graph G;
 GraphAttributes GA(G, GraphAttributes::nodeGraphics | GraphAttributes::edgeGraphics);
 
 void process_line(const std::string& x1, const std::string& y1, const std::string& x2,
-		const std::string& y2) {
+                  const std::string& y2) {
 	node n1 = G.newNode();
 	GA.x(n1) = bitstring_to_double(x1);
 	GA.y(n1) = bitstring_to_double(y1);
@@ -20,6 +20,18 @@ void process_line(const std::string& x1, const std::string& y1, const std::strin
 	GA.y(n2) = bitstring_to_double(y2);
 	G.newEdge(n1, n2);
 }
+
+void echo_segments() {
+	for (const auto& e : G.edges) {
+		std::cout
+				<< GA.x(e->source()) << ";"
+				<< GA.y(e->source()) << ";"
+				<< GA.x(e->target()) << ";"
+				<< GA.y(e->target())
+				<< std::endl;
+	}
+}
+
 
 template<>
 size_t compute_crossings<false>() {
