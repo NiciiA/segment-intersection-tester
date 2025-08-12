@@ -29,10 +29,36 @@ list<SEGMENT> segments;
 list<POINT> intersection_points;
 
 void process_line(const std::string& x1, const std::string& y1, const std::string& x2,
-		const std::string& y2) {
+                  const std::string& y2) {
 	segments.push_back(SEGMENT(POINT(PARSE(x1), PARSE(y1)), POINT(PARSE(x2), PARSE(y2))));
 }
 
+#ifdef RATIONAL
+void echo_segments() {
+	for (const auto& seg : segments) {
+		auto start_x = seg.start().xcoord();
+		auto start_y = seg.start().ycoord();
+		auto end_x = seg.end().xcoord();
+		auto end_y = seg.end().ycoord();
+		start_x.normalize();
+		start_y.normalize();
+		end_x.normalize();
+		end_y.normalize();
+		std::cout
+				<< (start_x.denominator() == 1
+					? start_x.numerator().to_string()
+					: start_x.to_string()) << ";"
+				<< (start_y.denominator() == 1
+					? start_y.numerator().to_string()
+					: start_y.to_string()) << ";"
+				<< (end_x.denominator() == 1
+					? end_x.numerator().to_string()
+					: end_x.to_string()) << ";"
+				<< (end_y.denominator() == 1 ? end_y.numerator().to_string() : end_y.to_string())
+				<< std::endl;
+	}
+}
+#else
 void echo_segments() {
 	for (const auto& seg : segments) {
 		std::cout
@@ -43,6 +69,7 @@ void echo_segments() {
 		<< std::endl;
 	}
 }
+#endif
 
 
 void check_intersection(const SEGMENT& a, const SEGMENT& b) {
@@ -72,7 +99,8 @@ size_t compute_crossings() {
 	GRAPH<POINT, SEGMENT> G;
 	leda::ALGO(segments, G, false);
 	node v;
-	forall_nodes(v, G) if (G.degree(v) > 1) intersection_points.append(G[v]);
+	forall_nodes(v, G) if (G.degree(v) > 1)
+		intersection_points.append(G[v]);
 #else
 	for (auto i = segments.first(); i; i = segments.succ(i)) {
 		for (auto j = i; j; j = segments.succ(j)) {

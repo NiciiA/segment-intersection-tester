@@ -98,6 +98,17 @@ segintbench-test summarize results-intersections.csv summary-intersections.md --
 TODO
 - seeds for test generation?
 - star_intersections_9 is super slow
+- different rational backends
+
+```bash
+f="tests/star_intersections/star_intersections_8_l_5000.csv"
+ninja -C adapters/cpp/cmake-build-debug
+rm test_*-parse.txt
+python adapters/python/test_fraction_r.py -e -f "$f" | tr -d '\15\32' > python-r-parse.txt
+python adapters/python/test_double_d.py -e -f "$f" | tr -d '\15\32' > python-d-parse.txt
+for e in adapters/cpp/cmake-build-debug/test_*; do echo $e; "./$e" -e -f "$f" > "$(basename $e)-parse.txt"; done
+md5sum *-r-parse.txt; md5sum *-d-parse.txt
+```
 
 1. **Generate test sets**  
    Run the generator to create test inputs:

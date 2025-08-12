@@ -28,17 +28,7 @@ def main(parse_bin, calculate_intersections, postprocess=None):
     segments = list(read_segments_from_csv(filepath, decode=parse_bin))
 
     if args.echo:
-        if isinstance(segments[0].p1.x, Fraction):
-            write_segments_to_csv([
-                Segment.build(
-                    x1.numerator * y1.denominator,
-                    y1.numerator * x1.denominator,
-                    x2.numerator * y2.denominator,
-                    y2.numerator * x2.denominator)
-                for (x1, y1), (x2, y2) in segments
-            ], sys.stdout, False)
-        else:
-            write_segments_to_csv(segments, sys.stdout, False)
+        write_segments_to_csv(segments, sys.stdout, False)
         return 1
 
     # Main execution

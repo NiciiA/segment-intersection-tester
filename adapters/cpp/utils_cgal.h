@@ -35,10 +35,10 @@ void echo_segment(const T& s) {
 	auto v = CGAL::exact(s.start());
 	auto u = CGAL::exact(s.end());
 	std::cout
-			<< v.hx().get_num() * v.hy().get_den() / v.hw() << ";"
-			<< v.hy().get_num() * v.hx().get_den() / v.hw() << ";"
-			<< u.hx().get_num() * u.hy().get_den() / u.hw() << ";"
-			<< u.hy().get_num() * u.hx().get_den() / u.hw()
+			<< v.hx() / v.hw() << ";"
+			<< v.hy() / v.hw() << ";"
+			<< u.hx() / u.hw() << ";"
+			<< u.hy() / u.hw()
 			<< std::endl;
 }
 
