@@ -14,7 +14,7 @@ using Boost_Point = bg::model::point<Rational, 2, bg::cs::cartesian>;
 #	define PARSE(x) Rational(bitstring_to_double(x))
 
 void print_point(const Rational& x, const Rational& y) {
-	print_point(x.convert_to<double>(), y.convert_to<double>());
+	std::cout << x << ";" << y << std::endl;
 }
 
 #else // !RATIONAL

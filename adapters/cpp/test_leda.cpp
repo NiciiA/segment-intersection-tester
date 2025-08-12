@@ -10,7 +10,7 @@
 #	define PARSE(x) leda::rational(bitstring_to_double(x))
 
 void print_point(const leda::rational& x, const leda::rational& y) {
-	print_point(x.to_double_precise(), y.to_double_precise());
+	std::cout << x << ";" << y << std::endl;
 }
 
 #else // !RATIONAL

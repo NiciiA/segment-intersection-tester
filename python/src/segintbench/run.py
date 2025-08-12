@@ -58,3 +58,4 @@ def main(parse_bin, calculate_intersections, postprocess=None):
         print(total_intersections)
         print(execution_time_ms)
         print(memory_usage)
+    return 0

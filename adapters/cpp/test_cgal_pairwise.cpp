@@ -28,7 +28,7 @@ size_t compute_crossings() {
 
 	if (print) {
 		for (const auto& point : pts) {
-			print_point(CGAL::to_double(point.x()), CGAL::to_double(point.y()));
+			print_point(point.x(), point.y());
 		}
 	}
 

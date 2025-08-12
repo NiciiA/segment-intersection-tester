@@ -16,7 +16,7 @@ size_t compute_crossings() {
 		if (vit->degree() > 2) { // Vertices with degree > 2 are intersection points
 			intersection_points_count++;
 			if (print) {
-				print_point(CGAL::to_double(vit->point().x()), CGAL::to_double(vit->point().y()));
+				print_point(vit->point().x(), vit->point().y());
 			}
 		}
 	}
