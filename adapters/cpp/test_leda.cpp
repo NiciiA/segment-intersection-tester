@@ -8,7 +8,10 @@
 #	include <LEDA/geo/rat_geo_alg.h>
 
 #	define PARSE(x) leda::rational(bitstring_to_double(x))
-#	define DUMP(x) x.to_double_precise()
+
+void print_point(const leda::rational& x, const leda::rational& y) {
+	print_point(x.to_double_precise(), y.to_double_precise());
+}
 
 #else // !RATIONAL
 
@@ -17,7 +20,6 @@
 #	include <LEDA/geo/float_geo_alg.h>
 
 #	define PARSE(x) bitstring_to_double(x)
-#	define DUMP(x) x
 
 #endif
 
@@ -69,7 +71,7 @@ size_t compute_crossings() {
 
 	if (print) {
 		for (const auto& p : intersection_points) {
-			print_point(DUMP(p.xcoord()), DUMP(p.ycoord()));
+			print_point(p.xcoord(), p.ycoord());
 		}
 	}
 	return intersection_points.length();

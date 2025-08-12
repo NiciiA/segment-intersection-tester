@@ -23,6 +23,15 @@ find_package(Boost REQUIRED COMPONENTS filesystem system)
 #target_include_directories(${Boost_INCLUDE_DIRS})
 #target_link_directories(${Boost_LIBRARY_DIRS})
 
+# Try to find GMP for Boost.Multiprecision GMP backend
+find_package(GMP QUIET)
+if (GMP_FOUND)
+    set(GMP_LIBS GMP::gmp GMP::gmpxx)
+else()
+    # Fallback to raw library names
+    set(GMP_LIBS gmp gmpxx)
+endif()
+
 find_package(CGAL REQUIRED)
 #target_include_directories(${CGAL_INCLUDE_DIRS})
 
@@ -61,8 +70,8 @@ endfunction()
 
 ########################################################################################################################
 
-add_test_executable(test_boost SUFFIX d DEFINES NUMBER_TYPE=Double LIBS ${Boost_LIBRARIES})
-add_test_executable(test_boost SUFFIX r DEFINES NUMBER_TYPE=Rational LIBS ${Boost_LIBRARIES})
+add_test_executable(test_boost SUFFIX d DEFINES LIBS ${Boost_LIBRARIES})
+add_test_executable(test_boost SUFFIX r DEFINES RATIONAL LIBS ${Boost_LIBRARIES} ${GMP_LIBS})
 
 add_test_executable(test_cgal_arrangement LIBS ${CGAL_LIBRARIES})
 add_test_executable(test_cgal_intersector LIBS ${CGAL_LIBRARIES})

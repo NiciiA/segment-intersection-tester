@@ -6,10 +6,16 @@ namespace bg = boost::geometry;
 
 #ifdef RATIONAL
 
+#include <boost/multiprecision/gmp.hpp>
+
 using Rational = boost::multiprecision::mpq_rational;
 using Boost_Point = bg::model::point<Rational, 2, bg::cs::cartesian>;
 
-#	define PARSE(x) Rational(x)
+#	define PARSE(x) Rational(bitstring_to_double(x))
+
+void print_point(const Rational& x, const Rational& y) {
+	print_point(x.convert_to<double>(), y.convert_to<double>());
+}
 
 #else // !RATIONAL
 

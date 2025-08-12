@@ -6,6 +6,7 @@
 #include <geos/noding/BasicSegmentString.h>
 #include <geos/noding/MCIndexNoder.h>
 #include <geos/noding/NodingIntersectionFinder.h>
+#include <geos/noding/IntersectionFinderAdder.h>
 #include <geos/noding/SimpleNoder.h>
 #include <geos/version.h>
 
@@ -32,27 +33,25 @@ template<bool print>
 size_t compute_crossings() {
 	PrecisionModel pm(PrecisionModel::FLOATING);
 	LineIntersector li(&pm);
-	NodingIntersectionFinder ifa(li);
-	ifa.setFindAllIntersections(true);
-	SimpleNoder noder(&ifa);
-	noder.computeNodes(&segments);
-	return ifa.count() / 2;
+	if (print) {
+		std::vector<Coordinate> intersections;
+		IntersectionFinderAdder ifa(li, intersections);
+		SimpleNoder noder(&ifa);
+		noder.computeNodes(&segments);
+		for (const auto& coord : intersections) {
+			print_point(coord.x, coord.y);
+		}
+		return intersections.size();
+	} else {
+		NodingIntersectionFinder ifa(li);
+		ifa.setFindAllIntersections(true);
+		SimpleNoder noder(&ifa);
+		noder.computeNodes(&segments);
+		return ifa.count() / 2;
+	}
 
-	// TODO test other noding strategies
-	// FIXME needed for print=true, but requires NodedSegmentStrings
-	// std::vector<Coordinate > intersections;
-	// IntersectionFinderAdder  ifa(li, intersections);
-	// const auto* noded = noder.getNodedSubstrings();
-	// for (const auto& seg : *noded) {
-	// 	const CoordinateSequence* coords = seg->getCoordinates();
-	// 	std::cout << "Segment: ";
-	// 	for (std::size_t i = 0; i < coords->size(); ++i) {
-	// 		auto c = coords->getAt(i);
-	// 		std::cout << "(" << c.x << ", " << c.y << ") ";
-	// 	}
-	// 	std::cout << "\n";
-	// }
-	//
+	// TODO other Noders?
+
 	// // Cleanup
 	// for (auto* seg : segments) {
 	// 	delete seg->getCoordinates(); // since we manually allocated them

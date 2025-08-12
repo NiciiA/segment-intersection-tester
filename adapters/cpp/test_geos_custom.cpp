@@ -68,7 +68,13 @@ size_t compute_crossings() {
 	MCIndexNoder noder(collector.get());
 	noder.computeNodes(&segments);
 
-	return collector->getIntersections().size();
+	const auto& coordinates = collector->getIntersections();
+	if (print) {
+		for (const auto& c : coordinates) {
+			print_point(c.x, c.y);
+		}
+	}
+	return coordinates.size();
 }
 
 #include "main.hpp"
