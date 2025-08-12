@@ -14,7 +14,28 @@ def cli():
     pass
 
 
-def process_configuration(func, params, filename, category, *, output_dir, force, pb):
+@cli.command()
+@click.argument("output", type=click.File("wt"), default="-")
+@click.option("--count", type=int, default=100)
+@click.option("--min", type=float, default=0.0)
+@click.option("--max", type=float, default=10.0)
+@click.option("--int/--float", is_flag=True)
+@click.option('--binary/--string', '-b/-s', is_flag=True, default=True)
+@click.option('--seed', default=None)
+def random(output, count, min, max, int, binary, seed):
+    import random
+    random.seed(seed)
+    write_segments_to_csv([
+        Segment.build([
+            random.randint(min, max) if int else random.uniform(min, max)
+            for _ in range(4)
+        ])
+        for _ in range(count)], output, binary_encode=binary)
+
+
+def process_configuration(func, params, filename, category, *, output_dir, force, pb, seed):
+    import random
+    random.seed(seed)
     filepath = Path(output_dir) / category / filename
     if filepath.is_file() and not force:
         pb.write(f"skipped: {filepath}")
@@ -31,15 +52,16 @@ def process_configuration(func, params, filename, category, *, output_dir, force
               type=click.Path(exists=False, dir_okay=True, file_okay=False, resolve_path=True))
 @click.option("--include", default=None)
 @click.option("--exclude", default=None)
-@click.option("--force", default=False)
+@click.option("--force", is_flag=True)
 @click.option("--timeout", default=None, type=parse_timeout)
 @click.option("--parallelism", "-p", default=os.cpu_count() - 1)
-def generate_testcases(include, exclude, parallelism, timeout, **kwargs):
+@click.option('--seed', default=None)
+def testcases(include, exclude, parallelism, timeout, **kwargs):
     incl_re = re.compile(include) if include else None
     excl_re = re.compile(exclude) if exclude else None
     configs = [c for c in CONFIGURATIONS if
                (not include or incl_re.match(f"{c[3]}/{c[2]}")) and (
-                           not exclude or not excl_re.match(f"{c[3]}/{c[2]}"))]
+                       not exclude or not excl_re.match(f"{c[3]}/{c[2]}"))]
 
     with tqdm(total=len(configs)) as pb:
         with ThreadPoolExecutor(max_workers=parallelism or None) as ex:
@@ -118,7 +140,7 @@ def geo_convert(input, output, binary):
     default='drive',
     help='Type of network to download (default: drive)')
 @click.option("--binary", default=True, is_flag=True)
-def generate_locations(output_dir, network, binary):
+def locations(output_dir, network, binary):
     os.makedirs(output_dir, exist_ok=True)
 
     cities = {

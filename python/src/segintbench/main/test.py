@@ -9,14 +9,14 @@ import socket
 import sys
 import traceback
 from collections import defaultdict
-from concurrent.futures import ProcessPoolExecutor
-from fractions import Fraction
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from itertools import product
 
 import sh
 from tqdm import tqdm
 from tqdm.contrib.concurrent import thread_map
 
+from segintbench.fast_inter import calculate_intersections_vectorized, IntersectionType
 from segintbench.utils import *
 
 hostname = socket.gethostname()
@@ -26,6 +26,26 @@ username = getpass.getuser()
 @click.group()
 def cli():
     pass
+
+
+def get_adapters(adapters_dir):
+    adapters_dir = Path(adapters_dir or f"{__file__}/../../../../../adapters").resolve()
+    if not adapters_dir.is_dir() or not (adapters_dir / "cpp/CMakeLists.txt").is_file():
+        raise click.UsageError(f"No command specified and no adapters found in {adapters_dir.resolve()}")
+    cpp_adapters = [str(e) for e in (adapters_dir / "cpp/build-release").glob("test_*")]
+    if not cpp_adapters:
+        print(f"Warning: no built C++ adapters found in {adapters_dir}/cpp/build-release!", file=sys.stderr)
+    return (
+            [str(adapters_dir / "rust/target/release/test_geo"),
+             f"java -jar {adapters_dir / 'java/target/topog-1.0-SNAPSHOT.jar'}"] +
+            [f"python3 {e}" for e in (adapters_dir / "python").glob("test_*.py")] + cpp_adapters
+    )
+
+
+@cli.command()
+@click.option("--adapters-dir", default=None, type=click.Path(exists=True, file_okay=False, resolve_path=True))
+def print_adapters(adapters_dir):
+    print("\n".join(get_adapters(adapters_dir)))
 
 
 @cli.command()
@@ -38,11 +58,10 @@ def cli():
 @click.option("--outdir", "-o", default=None, type=click.Path(file_okay=False, resolve_path=True))
 @click.option("--outstem", default=None)
 @click.option("--parallelism", "-p", default=os.cpu_count() - 1)
-@click.option("--print-adapters", is_flag=True)
 @click.option("--adapters-dir", default=None, type=click.Path(exists=True, file_okay=False, resolve_path=True))
 @click.option("--memory-limit", type=int, default=None,
               help="Maximum memory per test process (in MB)")
-def run_tests(commands, files, parallelism, print_adapters, adapters_dir, **kwargs):
+def run(commands, files, parallelism, adapters_dir, **kwargs):
     """Locally run one or more adapter on a given set of files"""
     files = [f.absolute() for f in parse_files(files, "*.csv")]
     if not kwargs.get("outstem", ""):
@@ -53,21 +72,8 @@ def run_tests(commands, files, parallelism, print_adapters, adapters_dir, **kwar
         else:
             kwargs["outdir"] = Path("./out")
 
-    if not commands or print_adapters:
-        adapters_dir = Path(adapters_dir or f"{__file__}/../../../../../adapters").resolve()
-        if not adapters_dir.is_dir() or not (adapters_dir / "cpp/CMakeLists.txt").is_file():
-            raise click.UsageError(f"No command specified and no adapters found in {adapters_dir.resolve()}")
-        cpp_adapters = [str(e) for e in (adapters_dir / "cpp/build-release").glob("test_*")]
-        if not cpp_adapters:
-            print(f"Warning: no built C++ adapters found in {adapters_dir}/cpp/build-release!", file=sys.stderr)
-        commands = (
-                [str(adapters_dir / "rust/target/release/test_geo"),
-                 f"java -jar {adapters_dir / 'java/target/topog-1.0-SNAPSHOT.jar'}"] +
-                [f"python3 {e}" for e in (adapters_dir / "python").glob("test_*.py")] + cpp_adapters
-        )
-        if print_adapters:
-            print("\n".join(commands))
-            return
+    if not commands:
+        commands = get_adapters(adapters_dir)
 
     thread_map(functools.partial(test_one, **kwargs),
                product(commands, files), total=len(commands) * len(files), max_workers=parallelism or None)
@@ -142,7 +148,7 @@ def test_one(args, *, print_intersections, force, retry_failed, timeout, outdir,
 @click.argument("out", required=True, type=click.File(mode="w"))
 @click.option("--timeout", default=None, type=parse_timeout)
 @click.option("--parallelism", "-p", default=os.cpu_count() - 1)
-def file_stats(files, out, timeout, parallelism):
+def stat(files, out, timeout, parallelism):
     files = list(parse_files(files, "*.csv"))
     w = None
     with tqdm(total=len(files)) as pb:
@@ -170,7 +176,7 @@ def file_stats(files, out, timeout, parallelism):
 
 def stat_one_file(file):
     tqdm.write(f"start: {file}")
-    segs = list(read_segments_from_csv(file))
+    segs = list(read_segments_from_csv(file, decode=lambda x: Fraction(bin2float(x))))
     n = len(segs)
 
     length_0 = horiz = vert = 0
@@ -184,34 +190,32 @@ def stat_one_file(file):
             vert += 1
         points.update(seg)
 
-    colinear = online = samepoint = intersect = indep = 0
+    same_x = length_0 or vert
+    same_y = length_0 or horiz
+    if not same_x:
+        same_x = len(set(*(s.p1.x, s.p2.x) for s in segs)) != len(segs) * 2
+    if not same_y:
+        same_y = len(set(*(s.p1.y, s.p2.y) for s in segs)) != len(segs) * 2
+
+    overlap = online = intersect = 0
     inter_points = set()
-    for seg1, seg2 in tqdm(itertools.combinations([s.map(Fraction) for s in segs], 2), total=n * (n - 1) // 2,
-                           desc=str(file)):
-        inter = list(find_intersection(seg1, seg2))
-        assert len(inter) <= 2
-        if len(inter) == 2:
-            assert inter[0] != inter[1]
-            colinear += 1
-        elif len(inter) == 0:
-            indep += 1
-        else:
-            inter_points.add(inter[0])
-            ps = set(itertools.chain(seg1, seg2, inter))
-            assert 1 <= len(ps) <= 5
-            if len(ps) <= 3:
-                samepoint += 1
-            elif len(ps) == 4:
-                online += 1
-            elif len(ps) == 5:
-                intersect += 1
+    for e in calculate_intersections_vectorized(segs):
+        if e[0] == IntersectionType.SEGMENT_OVERLAP:
+            overlap += 1
+        elif e[0] == IntersectionType.POINT_OVERLAP:
+            online += 1
+        elif e[0] == IntersectionType.TRUE_INTERSECTION:
+            intersect += 1
+            inter_points.add(e[3])
 
     tqdm.write(f"done: {file}")
-    return {"file": file, "segs": n, "combs": n * (n - 1) // 2,
-            "points": len(points), "intersection_points": len(inter_points),
-            "true_intersection_points": len(inter_points - points),
-            "length_0": length_0, "horiz": horiz, "vert": vert, "colinear": colinear, "online": online,
-            "samepoint": samepoint, "intersect": intersect, "indep": indep}
+    return {
+        "file": file, "segs": n, "combs": n * (n - 1) // 2,
+        "points": len(points), "intersection_points": len(inter_points),
+        "true_intersection_points": len(inter_points - points),
+        "length_0": length_0, "horiz": horiz, "vert": vert, "same_x": same_x, "same_y": same_y,
+        "overlap": overlap, "online": online, "intersect": intersect,
+    }
 
 
 @cli.command()

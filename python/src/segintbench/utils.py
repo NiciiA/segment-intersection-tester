@@ -3,6 +3,7 @@ import math
 import os
 import re
 from collections import namedtuple
+from fractions import Fraction
 from pathlib import Path
 from typing import NamedTuple
 
@@ -58,12 +59,26 @@ class Segment(NamedTuple):
         new_dy = dy * scale
         return self.build(x1, y1, x1 + new_dx, y1 + new_dy)
 
+    def slope(self):
+        return slope(self.p1, self.p2)
+
 
 # Function to get memory usage
 def get_memory_usage():
     import psutil
     process = psutil.Process(os.getpid())
     return process.memory_info().rss  # Memory usage in bytes
+
+
+def slope(a, b):
+    dx = Fraction(a.x) - b.x
+    dy = Fraction(a.y) - b.y
+    if dx == 0:
+        return None
+    else:
+        if dx < 0:
+            dx, dy = -dx, -dy
+        return dy / dx
 
 
 # Function to calculate the intersection of two segments
@@ -98,7 +113,8 @@ def find_intersection(seg1, seg2, epsilon=None, conv=lambda x: x):
         if 0.0 - epsilon <= s <= 1.0 + epsilon and 0.0 - epsilon <= t <= 1.0 + epsilon:
             yield Point(x1 + t * dx1, y1 + t * dy1)
     else:
-        if 0.0 <= s <= 1.0 and 0.0 <= t <= 1.0:
+        if 0.0 <= det1 <= det and 0.0 <= det2 <= det:
+            t = det2 / det
             yield Point(x1 + t * dx1, y1 + t * dy1)
 
 
