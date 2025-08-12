@@ -30,24 +30,41 @@ using LineString = bg::model::linestring<Boost_Point>;
 std::vector<LineString> boost_segments;
 
 void process_line(const std::string& x1, const std::string& y1, const std::string& x2,
-		const std::string& y2) {
+                  const std::string& y2) {
 	LineString lineString;
 	bg::append(lineString, Boost_Point(PARSE(x1), PARSE(y1)));
 	bg::append(lineString, Boost_Point(PARSE(x2), PARSE(y2)));
 	boost_segments.push_back(lineString);
 }
 
+#ifdef RATIONAL
+void echo_segments() {
+	for (const auto& seg : boost_segments) {
+		namespace mp = boost::multiprecision;
+		auto ux = seg.front().get<0>();
+		auto uy = seg.front().get<1>();
+		auto vx = seg.back().get<0>();
+		auto vy = seg.back().get<1>();
+		std::cout
+				<< mp::numerator(ux) * mp::denominator(uy) << ";"
+				<< mp::numerator(uy) * mp::denominator(ux) << ";"
+				<< mp::numerator(vx) * mp::denominator(vy) << ";"
+				<< mp::numerator(vy) * mp::denominator(vx)
+				<< std::endl;
+	}
+}
+#else
 void echo_segments() {
 	for (const auto& seg : boost_segments) {
 		std::cout
-		<< seg.front().get<0>() << ";"
-		<< seg.front().get<1>() << ";"
-		<< seg.back().get<0>() << ";"
-		<< seg.back().get<1>()
-		<< std::endl;
+				<< seg.front().get<0>() << ";"
+				<< seg.front().get<1>() << ";"
+				<< seg.back().get<0>() << ";"
+				<< seg.back().get<1>()
+				<< std::endl;
 	}
 }
-
+#endif
 
 template<bool print>
 size_t compute_crossings() {

@@ -16,7 +16,7 @@ typedef CGAL_KERNEL K;
 typedef K::Point_2 CGAL_Point;
 typedef K::Segment_2 CGAL_Segment;
 
-template <typename T = K::RT, std::enable_if_t<!std::is_same_v<T, double>, int> = 0>
+template<typename T = K::RT, std::enable_if_t<!std::is_same_v<T, double>, int> = 0>
 void print_point(const T& x, const T& y) {
 	std::cout << x << ";" << y << std::endl;
 }
@@ -24,19 +24,37 @@ void print_point(const T& x, const T& y) {
 std::vector<CGAL_Segment> cgal_segments;
 
 void process_line(const std::string& x1, const std::string& y1, const std::string& x2,
-		const std::string& y2) {
+                  const std::string& y2) {
 	cgal_segments.emplace_back(
-			CGAL_Segment(CGAL_Point(bitstring_to_double(x1), bitstring_to_double(y1)),
-					CGAL_Point(bitstring_to_double(x2), bitstring_to_double(y2))));
+		CGAL_Segment(CGAL_Point(bitstring_to_double(x1), bitstring_to_double(y1)),
+		             CGAL_Point(bitstring_to_double(x2), bitstring_to_double(y2))));
+}
+
+template<typename T>
+void echo_segment(const T& s) {
+	auto v = CGAL::exact(s.start());
+	auto u = CGAL::exact(s.end());
+	std::cout
+			<< v.hx().get_num() * v.hy().get_den() / v.hw() << ";"
+			<< v.hy().get_num() * v.hx().get_den() / v.hw() << ";"
+			<< u.hx().get_num() * u.hy().get_den() / u.hw() << ";"
+			<< u.hy().get_num() * u.hx().get_den() / u.hw()
+			<< std::endl;
+}
+
+typedef CGAL::Segment_2<CGAL::Simple_cartesian<double>> DS;
+
+void echo_segment(const DS& s) {
+	std::cout
+			<< s.source().hx() << ";"
+			<< s.source().hy() << ";"
+			<< s.target().hx() << ";"
+			<< s.target().hy()
+			<< std::endl;
 }
 
 void echo_segments() {
 	for (const auto& seg : cgal_segments) {
-		std::cout
-		<< seg.start().x() << ";"
-		<< seg.start().y() << ";"
-		<< seg.end().x() << ";"
-		<< seg.end().y()
-		<< std::endl;
+		echo_segment(seg);
 	}
 }
