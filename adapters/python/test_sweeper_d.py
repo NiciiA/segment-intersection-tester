@@ -9,11 +9,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 
 def postprocess(intersections):
-    unique_intersections = set()
-    for seg, intersections in intersections.items():
-        # intersections includes start and end points of seg
-        unique_intersections.update(starmap(Point,intersections[1:-1]))
-    return unique_intersections
+    return list(*starmap(Point, inters[1:-1]) for inters in intersections.values())
 
 
 isector = SweepIntersector()
