@@ -13,7 +13,7 @@ size_t compute_crossings() {
 
 	size_t intersection_points_count = 0;
 	for (auto vit = arr.vertices_begin(); vit != arr.vertices_end(); ++vit) {
-		if (vit->degree() > 2) { // Vertices with degree > 2 are intersection points
+		if (vit->degree() > 1) { // Vertices with degree > 1 are intersection points
 			intersection_points_count++;
 			if (print) {
 				print_point(vit->point().x(), vit->point().y());

@@ -6,7 +6,7 @@ template<bool print>
 size_t compute_crossings() {
 	std::list<CGAL_Point> pts;
 	CGAL::compute_intersection_points(cgal_segments.begin(), cgal_segments.end(),
-			std::back_inserter(pts), true);
+			std::back_inserter(pts), false);
 
 	if (print) {
 		for (const auto& point : pts) {

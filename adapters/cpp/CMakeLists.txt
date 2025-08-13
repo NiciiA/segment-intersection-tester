@@ -75,10 +75,12 @@ add_test_executable(test_boost SUFFIX r DEFINES RATIONAL LIBS ${Boost_LIBRARIES}
 
 add_test_executable(test_cgal_arrangement SUFFIX r LIBS ${CGAL_LIBRARIES})
 add_test_executable(test_cgal_intersector SUFFIX r LIBS ${CGAL_LIBRARIES})
+add_test_executable(test_cgal_custom_sweep SUFFIX r LIBS ${CGAL_LIBRARIES})
 add_test_executable(test_cgal_pairwise SUFFIX r LIBS ${CGAL_LIBRARIES})
 
 add_test_executable(test_cgal_arrangement SUFFIX d DEFINES "CGAL_KERNEL=CGAL::Simple_cartesian<double>" LIBS ${CGAL_LIBRARIES})
 add_test_executable(test_cgal_intersector SUFFIX d DEFINES "CGAL_KERNEL=CGAL::Simple_cartesian<double>" LIBS ${CGAL_LIBRARIES})
+add_test_executable(test_cgal_custom_sweep SUFFIX d DEFINES "CGAL_KERNEL=CGAL::Simple_cartesian<double>" LIBS ${CGAL_LIBRARIES})
 add_test_executable(test_cgal_pairwise SUFFIX d DEFINES "CGAL_KERNEL=CGAL::Simple_cartesian<double>" LIBS ${CGAL_LIBRARIES})
 
 add_test_executable(test_leda SUFFIX mm-d DEFINES ALGO=MULMULEY_SEGMENTS ALGO_GRAPH LIBS LEDA)
