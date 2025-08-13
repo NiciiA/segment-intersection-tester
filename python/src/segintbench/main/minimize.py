@@ -1,6 +1,6 @@
-import subprocess
-import shutil
 import argparse
+import shutil
+import subprocess
 
 
 def test_file(tester_path, filepath):
@@ -19,6 +19,7 @@ def test_file(tester_path, filepath):
         print(f"Error: Tester executable '{tester_path}' not found or not executable.")
         exit(1)
 
+
 def write_file(filepath, header, lines):
     """
     Write a new file with the given lines.
@@ -26,6 +27,7 @@ def write_file(filepath, header, lines):
     with open(filepath, "w") as f:
         f.write(header)
         f.writelines(lines)
+
 
 def minimize_file(tester_path, input_file, output_file):
     """
@@ -44,22 +46,29 @@ def minimize_file(tester_path, input_file, output_file):
 
     print(f"Original file causes an error with {len(data)} lines.")
 
-    for i in range(len(data)):
-        # Create a copy without the current line
-        reduced_data = data[:i] + data[i+1:]
-        write_file(output_file, header, reduced_data)
+    removed = 1
+    while removed:
+        removed = 0
+        i = 0
+        while i < len(data):
+            # Create a copy without the current line
+            reduced_data = data[:i] + data[i + 1:]
+            write_file(output_file, header, reduced_data)
 
-        if test_file(tester_path, output_file):
-            # If the reduced file still causes an error, update the data
-            print(f"Error persists after removing line {i + 1}.")
-            data = reduced_data
-        else:
-            # Otherwise, keep the line and move to the next
-            print(f"Error resolved after removing line {i + 1}. Keeping it.")
+            if test_file(tester_path, output_file):
+                # If the reduced file still causes an error, update the data
+                print(f"Error persists after removing line {i + 1 + removed}.")
+                data = reduced_data
+                removed += 1
+            else:
+                # Otherwise, keep the line and move to the next
+                print(f"Error resolved after removing line {i + 1 + removed}. Keeping it.")
+                i += 1
 
     # Write the final minimized file
     write_file(output_file, header, data)
     print(f"Minimized file written with {len(data)} lines.")
+
 
 def main():
     # Parse command-line arguments
@@ -77,6 +86,7 @@ def main():
 
     # Minimize the file
     minimize_file(args.tester, args.input_file, args.output_file)
+
 
 if __name__ == "__main__":
     main()

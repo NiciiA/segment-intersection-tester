@@ -52,8 +52,8 @@ def main(parse_bin, calculate_intersections, postprocess=None):
     # Output results
     if args.accuracy:
         print("p_x;p_y")
-        for point in intersections:
-            print(f"{point.x};{point.y}")
+        for x, y in intersections:
+            print(f"{x};{y}")
     else:
         print(total_intersections)
         print(execution_time_ms)
