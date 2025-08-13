@@ -199,14 +199,21 @@ def parse_timeout(val):
         return val
 
 
-def parse_files(files, default_ext):
+def parse_files(files, default_ext, exclude=None):
     for file in files:
         path = Path(file)
-        if path.is_file():
+        if path.is_file() and (not exclude or not re.search(exclude, str(file))):
             yield path
+            continue
         elif path.is_dir():
-            yield from path.rglob(default_ext)
+            iter = path.rglob(default_ext)
         elif re.search(r"[*?\[]", file):
-            yield from Path('.').glob(file)
+            iter = Path('.').glob(file)
         else:
             raise click.UsageError(f"Invalid file/directory: {file}")
+        if exclude:
+            for file in iter:
+                if not re.search(exclude, str(file)):
+                    yield file
+        else:
+            yield from iter

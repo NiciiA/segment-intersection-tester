@@ -9,7 +9,7 @@ import socket
 import sys
 import traceback
 from collections import defaultdict
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor
 from itertools import product
 
 import sh
@@ -28,42 +28,55 @@ def cli():
     pass
 
 
-def get_adapters(adapters_dir):
+def get_adapters(adapters_dir, exclude=None, only=None):
     adapters_dir = Path(adapters_dir or f"{__file__}/../../../../../adapters").resolve()
     if not adapters_dir.is_dir() or not (adapters_dir / "cpp/CMakeLists.txt").is_file():
         raise click.UsageError(f"No command specified and no adapters found in {adapters_dir.resolve()}")
+
     cpp_adapters = [str(e) for e in (adapters_dir / "cpp/build-release").glob("test_*")]
     if not cpp_adapters:
         print(f"Warning: no built C++ adapters found in {adapters_dir}/cpp/build-release!", file=sys.stderr)
-    return (
-            [str(adapters_dir / "rust/target/release/test_geo"),
-             f"java -jar {adapters_dir / 'java/target/topog-1.0-SNAPSHOT.jar'}"] +
-            [f"python3 {e}" for e in (adapters_dir / "python").glob("test_*.py")] + cpp_adapters
-    )
+
+    adapters = [str(adapters_dir / "rust/target/release/test_geo"),
+                f"java -jar {adapters_dir / 'java/target/topog-1.0-SNAPSHOT.jar'}"]
+    adapters.extend(f"python3 {e}" for e in (adapters_dir / "python").glob("test_*.py"))
+    adapters.extend(cpp_adapters)
+
+    if exclude:
+        adapters = [a for a in adapters if not re.search(exclude, adapters)]
+    if only:
+        adapters = [a for a in adapters if re.search(only, adapters)]
+
+    return adapters
 
 
 @cli.command()
 @click.option("--adapters-dir", default=None, type=click.Path(exists=True, file_okay=False, resolve_path=True))
-def print_adapters(adapters_dir):
-    print("\n".join(get_adapters(adapters_dir)))
+@click.option("--exclude-commands", "-n", default=None)
+@click.option("--only-commands", "-j", default=None)
+def print_adapters(adapters_dir, exclude_commands, only_commands):
+    print("\n".join(get_adapters(adapters_dir, exclude_commands, only_commands)))
 
 
 @cli.command()
 @click.argument("files", required=True, nargs=-1)
-@click.option("--command", "-c", "commands", multiple=True)
+@click.option("--exclude-files", "-e", default=None)
 @click.option("--print-intersections", "-a", is_flag=True)
+@click.option("--outdir", "-o", default=None, type=click.Path(file_okay=False, resolve_path=True))
+@click.option("--outstem", "-s", default=None)
+@click.option("--command", "-c", "commands", multiple=True)
+@click.option("--adapters-dir", default=None, type=click.Path(exists=True, file_okay=False, resolve_path=True))
+@click.option("--exclude-commands", "-n", default=None)
+@click.option("--only-commands", "-j", default=None)
+@click.option("--parallelism", "-p", default=os.cpu_count() - 1)
 @click.option("--force", "-f", is_flag=True)
 @click.option("--retry-failed", "-r", is_flag=True)
-@click.option("--timeout", default=None, type=parse_timeout)
-@click.option("--outdir", "-o", default=None, type=click.Path(file_okay=False, resolve_path=True))
-@click.option("--outstem", default=None)
-@click.option("--parallelism", "-p", default=os.cpu_count() - 1)
-@click.option("--adapters-dir", default=None, type=click.Path(exists=True, file_okay=False, resolve_path=True))
-@click.option("--memory-limit", type=int, default=None,
+@click.option("--timeout", "-t", default=None, type=parse_timeout)
+@click.option("--memory-limit", "-m", type=int, default=None,
               help="Maximum memory per test process (in MB)")
-def run(commands, files, parallelism, adapters_dir, **kwargs):
+def run(commands, files, parallelism, adapters_dir, exclude_files, exclude_commands, only_commands, **kwargs):
     """Locally run one or more adapter on a given set of files"""
-    files = [f.absolute() for f in parse_files(files, "*.csv")]
+    files = [f.absolute() for f in parse_files(files, "*.csv", exclude_files)]
     if not kwargs.get("outstem", ""):
         kwargs["outstem"] = Path(os.path.commonpath(Path(f).parent for f in files)).resolve()
     if not kwargs.get("outdir", ""):
@@ -73,7 +86,7 @@ def run(commands, files, parallelism, adapters_dir, **kwargs):
             kwargs["outdir"] = Path("./out")
 
     if not commands:
-        commands = get_adapters(adapters_dir)
+        commands = get_adapters(adapters_dir, exclude_commands, only_commands)
 
     thread_map(functools.partial(test_one, **kwargs),
                product(commands, files), total=len(commands) * len(files), max_workers=parallelism or None)
