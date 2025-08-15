@@ -1,6 +1,5 @@
 from enum import Enum, auto
 
-import numpy as np
 import pandas as pd
 
 
@@ -40,13 +39,15 @@ def find_intersections_vect(df1, df2):
     dy3 = df1['y1'] - df2['y1']
 
     ddf = pd.DataFrame({
-        'det': dx1 * dy2 - dx2 * dy1,
-        'det1': dx1 * dy3 - dx3 * dy1,
-        'det2': dx2 * dy3 - dx3 * dy2
+        'det': (dx1 * dy2) - (dx2 * dy1),
+        'det1': (dx1 * dy3) - (dx3 * dy1),
+        'det2': (dx2 * dy3) - (dx3 * dy2)
     })
-
-    sel = (0 <= ddf['det1']) & (ddf['det1'] <= ddf['det']) & (0 <= ddf['det2']) & (ddf['det2'] <= ddf['det'])
-    for index, row in ddf[sel].iterrows():
+    sel1 = ((ddf['det'] > 0) & (0 <= ddf['det1']) & (ddf['det1'] <= ddf['det']) & (0 <= ddf['det2']) & (
+                ddf['det2'] <= ddf['det']))
+    sel2 = ((ddf['det'] < 0) & (0 >= ddf['det1']) & (ddf['det1'] >= ddf['det']) & (0 >= ddf['det2']) & (
+                ddf['det2'] >= ddf['det']))
+    for index, row in ddf[sel1 | sel2].iterrows():
         seg1 = (df1['x1'][index], df1['y1'][index]), (df1['x2'][index], df1['y2'][index])
         seg2 = (df2['x1'][index], df2['y1'][index]), (df2['x2'][index], df2['y2'][index])
         if row['det'] == 0:
@@ -63,4 +64,4 @@ def calculate_intersections_vectorized(segments):
     else:
         df = pd.DataFrame((s.coords() for s in segments), columns=["x1", "y1", "x2", "y2"])
     for i in range(1, len(df)):
-        yield from find_intersections_vect(df.iloc[i:], df.iloc[:-i])
+        yield from find_intersections_vect(df.iloc[:-i], df.iloc[i:])

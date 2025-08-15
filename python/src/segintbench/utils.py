@@ -95,9 +95,9 @@ def find_intersection(seg1, seg2, epsilon=None, conv=lambda x: x):
     dx3 = x1 - x3
     dy3 = y1 - y3
 
-    det = dx1 * dy2 - dx2 * dy1
-    det1 = dx1 * dy3 - dx3 * dy1
-    det2 = dx2 * dy3 - dx3 * dy2
+    det = (dx1 * dy2) - (dx2 * dy1)
+    det1 = (dx1 * dy3) - (dx3 * dy1)
+    det2 = (dx2 * dy3) - (dx3 * dy2)
 
     if det == 0:
         if det1 != 0.0 or det2 != 0.0:
@@ -113,7 +113,8 @@ def find_intersection(seg1, seg2, epsilon=None, conv=lambda x: x):
         if 0.0 - epsilon <= s <= 1.0 + epsilon and 0.0 - epsilon <= t <= 1.0 + epsilon:
             yield Point(x1 + t * dx1, y1 + t * dy1)
     else:
-        if 0.0 <= det1 <= det and 0.0 <= det2 <= det:
+        if ((det > 0 and 0.0 <= det1 <= det and 0.0 <= det2 <= det) or
+            (det < 0 and 0.0 >= det1 >= det and 0.0 >= det2 >= det)):
             t = det2 / det
             yield Point(x1 + t * dx1, y1 + t * dy1)
 

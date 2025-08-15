@@ -1,9 +1,11 @@
+import collections
 import concurrent
 import csv
 import datetime
 import functools
 import getpass
 import json
+import pprint
 import resource
 import socket
 import sys
@@ -11,6 +13,8 @@ import traceback
 from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor
 from itertools import product
+from json import JSONDecodeError
+from textwrap import indent
 
 import sh
 from tqdm import tqdm
@@ -43,9 +47,9 @@ def get_adapters(adapters_dir, exclude=None, only=None):
     adapters.extend(cpp_adapters)
 
     if exclude:
-        adapters = [a for a in adapters if not re.search(exclude, adapters)]
+        adapters = [a for a in adapters if not re.search(exclude, a)]
     if only:
-        adapters = [a for a in adapters if re.search(only, adapters)]
+        adapters = [a for a in adapters if re.search(only, a)]
 
     return adapters
 
@@ -92,9 +96,13 @@ def run(commands, files, parallelism, adapters_dir, exclude_files, exclude_comma
                product(commands, files), total=len(commands) * len(files), max_workers=parallelism or None)
 
 
+def get_command_file(cmdline):
+    return Path(cmdline.split(" ")[-1])  # simple heuristic that works for all commands above
+
+
 def test_one(args, *, print_intersections, force, retry_failed, timeout, outdir, outstem, memory_limit):
     command, file = args
-    command_file = Path(command.split(" ")[-1])  # simple heuristic that works for all commands above
+    command_file = get_command_file(command)
     basepath = Path(outdir).absolute() / command_file.name / Path(file).relative_to(outstem)
     outpath = basepath.with_suffix(".out.csv")
     errpath = basepath.with_suffix(".err.txt")
@@ -112,7 +120,7 @@ def test_one(args, *, print_intersections, force, retry_failed, timeout, outdir,
     comm = comm.time.bake(verbose=True, output=timepath, _cwd=outpath.parent).bake("--")
     if memory_limit:
         max_bytes = memory_limit * 1024 * 1024
-        comm.bake(_preexec_fn=lambda: resource.setrlimit(resource.RLIMIT_AS, (max_bytes, max_bytes)))
+        comm = comm.bake(_preexec_fn=lambda: resource.setrlimit(resource.RLIMIT_AS, (max_bytes, max_bytes)))
     if timeout:
         comm = comm.timeout.bake(kill_after=10).bake(timeout)
     comm = comm.bake(*command.split(" "), _err=errpath, _out=outpath)  # _env={}
@@ -130,8 +138,8 @@ def test_one(args, *, print_intersections, force, retry_failed, timeout, outdir,
         "error": str(errpath),
         "input_stat": tuple(Path(file).stat()),
         "command_stat": tuple(command_file.stat()),
-        "input_md5": sh.md5sum(file),
-        "command_md5": sh.md5sum(command_file),
+        "input_md5": sh.md5sum(file).strip(),
+        "command_md5": sh.md5sum(command_file).strip(),
         "print_intersections": print_intersections,
         "force": force,
         "retry_failed": retry_failed,
@@ -148,7 +156,7 @@ def test_one(args, *, print_intersections, force, retry_failed, timeout, outdir,
     meta["exit_code"] = exit_code
     meta["endtime"] = datetime.datetime.now().isoformat()
     meta["output_stat"] = tuple(outpath.stat())
-    meta["output_md5"] = sh.md5sum(outpath)
+    meta["output_md5"] = sh.md5sum(outpath).strip()
     with open(metapath, "w") as f:
         json.dump(meta, f, indent=4)
 
@@ -206,9 +214,9 @@ def stat_one_file(file):
     same_x = length_0 or vert
     same_y = length_0 or horiz
     if not same_x:
-        same_x = len(set(*(s.p1.x, s.p2.x) for s in segs)) != len(segs) * 2
+        same_x = len(set(itertools.chain.from_iterable((s.p1.x, s.p2.x) for s in segs))) != len(segs) * 2
     if not same_y:
-        same_y = len(set(*(s.p1.y, s.p2.y) for s in segs)) != len(segs) * 2
+        same_y = len(set(itertools.chain.from_iterable((s.p1.y, s.p2.y) for s in segs))) != len(segs) * 2
 
     overlap = online = intersect = 0
     inter_points = set()
@@ -237,26 +245,42 @@ def stat_one_file(file):
 def collect(files, out):
     files = list(parse_files(files, "*.meta.json"))
     w = None
-    errors = 0
+    errors = failed_runs = 0
+    failed_cmds = collections.Counter()
+    failed_files = collections.Counter()
     for metafile in tqdm(files):
         with open(metafile) as f:
-            meta = json.load(f)
+            try:
+                meta = json.load(f)
+            except JSONDecodeError as e:
+                tqdm.write(f"Corrupt meta data {metafile}: {e}", file=sys.stderr)
+                errors += 1
+                continue
         for k in ["result", "time", "memory", "uniqfile", "uniqfile_stat", "uniqfile_md5"]:
             meta[k] = None
         if meta.get("exit_code", None) != 0:
             tqdm.write(f"Failed run in {metafile} with exit code {meta.get('exit_code', None)}", file=sys.stderr)
-            errors += 1
+            failed_runs += 1
+            failed_cmds[meta["command"]] += 1
+            failed_files[meta["input"]] += 1
         else:
             try:
                 if meta.get("print_intersections", True):
-                    segs = set(read_segments_from_csv(meta["output"]))
+                    with open(meta["output"], "rt") as csvfile:
+                        header = next(csvfile).strip()
+                        if header != 'p_x;p_y':  # Skip the header line
+                            raise IOError(f"Invalid CSV header {header!r}.")
+                        segs = set(csvfile.readlines())
+
                     meta["result"] = len(segs)
                     if segs:
                         uniqfile = Path(meta["output"]).with_suffix(".uniq.csv")
-                        write_segments_to_csv(sorted(segs), uniqfile, binary_encode=False)
+                        with open(uniqfile, "wt") as csvfile:
+                            csvfile.write("p_x;p_y\n")
+                            csvfile.writelines(sorted(segs))
                         meta["uniqfile"] = str(uniqfile)
                         meta["uniqfile_stat"] = tuple(uniqfile.stat())
-                        meta["uniqfile_md5"] = sh.md5sum(uniqfile)
+                        meta["uniqfile_md5"] = sh.md5sum(uniqfile).strip()
                 else:
                     with open(meta["output"]) as f:
                         meta["result"], meta["time"], meta["memory"] = map(int, f.readlines())
@@ -265,14 +289,22 @@ def collect(files, out):
                 msg = '\n\t'.join(traceback.format_exception_only(e)).strip()
                 tqdm.write(f"Error reading output for {metafile}: {msg}", file=sys.stderr)
                 errors += 1
+                failed_cmds[meta["command"]] += 1
+                failed_files[meta["input"]] += 1
 
         if not w:
             w = csv.DictWriter(out, meta.keys())
             w.writeheader()
         w.writerow(meta)
 
+    if failed_runs != 0:
+        tqdm.write(f"Found {failed_runs} failed runs!", file=sys.stderr)
+        tqdm.write(f"Failures/errors per command:\n{pprint.pformat(failed_cmds)}", file=sys.stderr)
+        tqdm.write(f"Failures/errors per file:\n{pprint.pformat(failed_files)}", file=sys.stderr)
     if errors != 0:
         raise click.ClickException(f"{errors} errors encountered while collecting results, see stderr for details")
+    else:
+        tqdm.write(f"Successfully processed {len(files)} files!")
 
 
 @cli.command()
@@ -281,27 +313,45 @@ def collect(files, out):
 @click.option("--tablefmt", "-f", default="github")
 @click.option("--key", "-k", default="result")
 @click.option("--missing", "-m", default="")
-def summarize(file, out, tablefmt, key, missing):
+@click.option("--exclude-files", "-e", default=None)
+@click.option("--only-files", "-o", default=None)
+@click.option("--exclude-commands", "-n", default=None)
+@click.option("--only-commands", "-c", default=None)
+def summarize(file, out, tablefmt, key, missing, exclude_files, only_files, exclude_commands, only_commands, ):
     summary = defaultdict(dict)
     for row in csv.DictReader(file):
+        if exclude_files and re.search(exclude_files, row["input"]):
+            continue
+        if only_files and not re.search(only_files, row["input"]):
+            continue
         summary[row["input"]][row["command"]] = str(row[key])
 
     sorted_inputs = sorted(summary.keys())
-    full_commands = set(itertools.chain.from_iterable(v.keys() for v in summary.values()))
-    sorted_full_commands = sorted(full_commands)
+    full_commands = sorted(set(itertools.chain.from_iterable(v.keys() for v in summary.values())))
+    print(f"Found {len(full_commands)} commands:", file=sys.stderr)
+    print(indent("\n".join(full_commands), "\t"), file=sys.stderr)
+    if exclude_commands:
+        full_commands = [c for c in full_commands if not re.search(exclude_commands, c)]
+    if only_commands:
+        full_commands = [c for c in full_commands if re.search(only_commands, c)]
+    if exclude_commands or only_commands:
+        print(f"Selected {len(full_commands)} commands:", file=sys.stderr)
+        print(indent("\n".join(full_commands), "\t"), file=sys.stderr)
 
     table = []
     for inp in sorted_inputs:
         row = [inp]
-        for cmd in sorted_full_commands:
+        for cmd in full_commands:
             cell = summary[inp].get(cmd, missing)
             row.append(cell)
         table.append(row)
 
-    headers = ["Input"] + sorted_full_commands
+    headers = ["Input"] + [get_command_file(c).name for c in full_commands]
 
     from tabulate import tabulate
     out.write(tabulate(table, headers=headers, tablefmt=tablefmt))
+
+    print(f"Wrote {len(sorted_inputs)} rows", file=sys.stderr)
 
 
 if __name__ == '__main__':

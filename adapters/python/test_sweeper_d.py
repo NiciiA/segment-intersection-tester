@@ -9,7 +9,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 
 def postprocess(intersections):
-    return list(*starmap(Point, inters[1:-1]) for inters in intersections.values())
+    return list(itertools.chain.from_iterable(starmap(Point, inters[1:-1])) for inters in intersections.values())
 
 
 isector = SweepIntersector()
