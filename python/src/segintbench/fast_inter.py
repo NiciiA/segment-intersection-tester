@@ -43,10 +43,10 @@ def find_intersections_vect(df1, df2):
         'det1': (dx1 * dy3) - (dx3 * dy1),
         'det2': (dx2 * dy3) - (dx3 * dy2)
     })
-    sel1 = ((ddf['det'] > 0) & (0 <= ddf['det1']) & (ddf['det1'] <= ddf['det']) & (0 <= ddf['det2']) & (
-                ddf['det2'] <= ddf['det']))
+    sel1 = ((ddf['det'] >= 0) & (0 <= ddf['det1']) & (ddf['det1'] <= ddf['det']) & (0 <= ddf['det2']) & (
+            ddf['det2'] <= ddf['det']))
     sel2 = ((ddf['det'] < 0) & (0 >= ddf['det1']) & (ddf['det1'] >= ddf['det']) & (0 >= ddf['det2']) & (
-                ddf['det2'] >= ddf['det']))
+            ddf['det2'] >= ddf['det']))
     for index, row in ddf[sel1 | sel2].iterrows():
         seg1 = (df1['x1'][index], df1['y1'][index]), (df1['x2'][index], df1['y2'][index])
         seg2 = (df2['x1'][index], df2['y1'][index]), (df2['x2'][index], df2['y2'][index])

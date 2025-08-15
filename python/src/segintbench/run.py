@@ -1,4 +1,5 @@
 import argparse
+import inspect
 import sys
 import time
 
@@ -36,7 +37,9 @@ def main(parse_bin, calculate_intersections, postprocess=None):
     start_time = time.perf_counter()
 
     # Calculate intersections
-    intersections = list(calculate_intersections(segments))
+    intersections = calculate_intersections(segments)
+    if inspect.isgenerator(intersections):
+        intersections = list(intersections)
 
     end_time = time.perf_counter()
     final_memory = get_memory_usage()

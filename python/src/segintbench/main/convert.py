@@ -53,14 +53,14 @@ def randomize_lengths(input, output, seed):
 @click.argument('input', type=click.File('rt'))
 @click.argument('output', type=click.File('wt'))
 def float2bin(input, output):
-    write_segments_to_csv(read_segments_from_csv(input, float), output, binary_encode=True)
+    write_segments_to_csv(list(read_segments_from_csv(input, float)), output, binary_encode=True)
 
 
 @cli.command()
 @click.argument('input', type=click.File('rt'))
 @click.argument('output', type=click.File('wt'))
 def bin2float(input, output):
-    write_segments_to_csv(read_segments_from_csv(input), output, binary_encode=False)
+    write_segments_to_csv(list(read_segments_from_csv(input)), output, binary_encode=False)
 
 
 if __name__ == '__main__':
