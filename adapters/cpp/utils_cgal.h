@@ -18,7 +18,7 @@ typedef K::Segment_2 CGAL_Segment;
 
 template<typename T = K::RT, std::enable_if_t<!std::is_same_v<T, double>, int> = 0>
 void print_point(const T& x, const T& y) {
-	std::cout << x << ";" << y << std::endl;
+	std::cout << CGAL::exact(x) << ";" << CGAL::exact(y) << std::endl;
 }
 
 std::vector<CGAL_Segment> cgal_segments;
