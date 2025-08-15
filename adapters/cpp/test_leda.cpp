@@ -103,7 +103,7 @@ size_t compute_crossings() {
 		intersection_points.append(G[v]);
 #else
 	for (auto i = segments.first(); i; i = segments.succ(i)) {
-		for (auto j = i; j; j = segments.succ(j)) {
+		for (auto j = segments.succ(i); j; j = segments.succ(j)) {
 			check_intersection(segments.contents(i), segments.contents(j));
 		}
 	}
