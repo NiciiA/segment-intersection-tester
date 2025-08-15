@@ -74,6 +74,7 @@ def print_adapters(adapters_dir, exclude_commands, only_commands):
 @click.option("--only-commands", "-j", default=None)
 @click.option("--parallelism", "-p", default=os.cpu_count() - 1)
 @click.option("--force", "-f", is_flag=True)
+@click.option("--quiet/--verbose", "-q/-v", is_flag=True, default=True)
 @click.option("--retry-failed", "-r", is_flag=True)
 @click.option("--timeout", "-t", default=None, type=parse_timeout)
 @click.option("--memory-limit", "-m", type=int, default=None,
@@ -96,23 +97,21 @@ def run(commands, files, parallelism, adapters_dir, exclude_files, exclude_comma
                product(commands, files), total=len(commands) * len(files), max_workers=parallelism or None)
 
 
-def get_command_file(cmdline):
-    return Path(cmdline.split(" ")[-1])  # simple heuristic that works for all commands above
-
-
-def test_one(args, *, print_intersections, force, retry_failed, timeout, outdir, outstem, memory_limit):
+def test_one(args, *, print_intersections, force, retry_failed, timeout, outdir, outstem, memory_limit, quiet):
     command, file = args
     command_file = get_command_file(command)
     basepath = Path(outdir).absolute() / command_file.name / Path(file).relative_to(outstem)
     outpath = basepath.with_suffix(".out.csv")
+    uniqpath = basepath.with_suffix(".uniq.csv")
     errpath = basepath.with_suffix(".err.txt")
     timepath = basepath.with_suffix(".time.txt")
     metapath = basepath.with_suffix(".meta.json")
     if not force and outpath.exists() and metapath.exists() and (not retry_failed or not errpath.exists()):
-        tqdm.write(f"Skipping {file} as output {outpath} already exists")
+        if not quiet:
+            tqdm.write(f"Skipping {file} as output {outpath} already exists")
         return
     outpath.parent.mkdir(parents=True, exist_ok=True)
-    for p in (outpath, errpath, timepath, metapath):
+    for p in (outpath, errpath, timepath, metapath, uniqpath):
         if p.exists():
             p.unlink()
 
@@ -151,7 +150,8 @@ def test_one(args, *, print_intersections, force, retry_failed, timeout, outdir,
         exit_code = 0
     except sh.ErrorReturnCode as e:
         exit_code = e.exit_code
-        tqdm.write(f"Command {command_file} failed on {file} with code {exit_code}, check {errpath} for details")
+        if not quiet:
+            tqdm.write(f"Command {command_file} failed on {file} with code {exit_code}, check {errpath} for details")
 
     meta["exit_code"] = exit_code
     meta["endtime"] = datetime.datetime.now().isoformat()
@@ -196,7 +196,7 @@ def stat(files, out, timeout, parallelism):
 
 
 def stat_one_file(file):
-    tqdm.write(f"start: {file}")
+    # tqdm.write(f"start: {file}")
     segs = list(read_segments_from_csv(file, decode=lambda x: Fraction(bin2float(x))))
     n = len(segs)
 
@@ -211,12 +211,12 @@ def stat_one_file(file):
             vert += 1
         points.update(seg)
 
-    same_x = length_0 or vert
-    same_y = length_0 or horiz
-    if not same_x:
-        same_x = len(set(itertools.chain.from_iterable((s.p1.x, s.p2.x) for s in segs))) != len(segs) * 2
-    if not same_y:
-        same_y = len(set(itertools.chain.from_iterable((s.p1.y, s.p2.y) for s in segs))) != len(segs) * 2
+    # same_x = length_0 or vert
+    # same_y = length_0 or horiz
+    # if not same_x:
+    same_x = (len(segs) * 2) - len(set(itertools.chain.from_iterable((s.p1.x, s.p2.x) for s in segs)))
+    # if not same_y:
+    same_y = (len(segs) * 2) - len(set(itertools.chain.from_iterable((s.p1.y, s.p2.y) for s in segs)))
 
     overlap = online = intersect = 0
     inter_points = set()
@@ -229,12 +229,13 @@ def stat_one_file(file):
             intersect += 1
             inter_points.add(e[3])
 
-    tqdm.write(f"done: {file}")
+    # tqdm.write(f"done: {file}")
     return {
         "file": file, "segs": n, "combs": n * (n - 1) // 2,
         "points": len(points), "intersection_points": len(inter_points),
         "true_intersection_points": len(inter_points - points),
         "length_0": length_0, "horiz": horiz, "vert": vert, "same_x": same_x, "same_y": same_y,
+        "same_p": (len(segs) * 2) - len(points),
         "overlap": overlap, "online": online, "intersect": intersect,
     }
 
@@ -256,7 +257,7 @@ def collect(files, out):
                 tqdm.write(f"Corrupt meta data {metafile}: {e}", file=sys.stderr)
                 errors += 1
                 continue
-        for k in ["result", "time", "memory", "uniqfile", "uniqfile_stat", "uniqfile_md5"]:
+        for k in ["result", "result_uniq", "time", "memory", "uniqfile", "uniqfile_stat", "uniqfile_md5"]:
             meta[k] = None
         if meta.get("exit_code", None) != 0:
             tqdm.write(f"Failed run in {metafile} with exit code {meta.get('exit_code', None)}", file=sys.stderr)
@@ -270,9 +271,14 @@ def collect(files, out):
                         header = next(csvfile).strip()
                         if header != 'p_x;p_y':  # Skip the header line
                             raise IOError(f"Invalid CSV header {header!r}.")
-                        segs = set(csvfile.readlines())
+                        segs_count = 0
+                        segs = set()
+                        for row in csvfile.readlines():
+                            segs_count += 1
+                            segs.add(row)
+                        meta["result_uniq"] = segs_count
+                        meta["result"] = len(segs)
 
-                    meta["result"] = len(segs)
                     if segs:
                         uniqfile = Path(meta["output"]).with_suffix(".uniq.csv")
                         with open(uniqfile, "wt") as csvfile:
@@ -317,7 +323,16 @@ def collect(files, out):
 @click.option("--only-files", "-o", default=None)
 @click.option("--exclude-commands", "-n", default=None)
 @click.option("--only-commands", "-c", default=None)
-def summarize(file, out, tablefmt, key, missing, exclude_files, only_files, exclude_commands, only_commands, ):
+@click.option("--reference", "-r", default=None)
+@click.option("--stat", "-s", default=None, type=click.File('rt'))
+@click.option("--stat-base", "-b", default="")
+def summarize(file, out, tablefmt, key, missing, exclude_files, only_files, exclude_commands, only_commands, reference,
+              stat, stat_base):
+    if stat:
+        stats = {stat_base + row["file"]: row for row in csv.DictReader(stat)}
+    else:
+        stats = {}
+
     summary = defaultdict(dict)
     for row in csv.DictReader(file):
         if exclude_files and re.search(exclude_files, row["input"]):
@@ -341,12 +356,22 @@ def summarize(file, out, tablefmt, key, missing, exclude_files, only_files, excl
     table = []
     for inp in sorted_inputs:
         row = [inp]
+        ref = None
+        if reference:
+            ref = summary[inp].get(reference, None)
         for cmd in full_commands:
             cell = summary[inp].get(cmd, missing)
+            if ref is not None and (cell != ref and cell != missing):
+                cell = f"**{cell}**"
             row.append(cell)
+        if stats and inp in stats:
+            s = stats[inp]
+            s.pop("file", None)
+            row.extend(s.values())
         table.append(row)
 
-    headers = ["Input"] + [get_command_file(c).name for c in full_commands]
+    headers = ["Input"] + [get_command_file(c).name for c in full_commands] + list(
+        stats[sorted_inputs[0]].keys()) if stats else []
 
     from tabulate import tabulate
     out.write(tabulate(table, headers=headers, tablefmt=tablefmt))

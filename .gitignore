@@ -3,6 +3,9 @@ cmake-build-*/
 /adapters/deps/leda/
 /data/
 /tests/
+/out/
+/tests-*/
+/out-*/
 
 *.ninja
 .cmake/

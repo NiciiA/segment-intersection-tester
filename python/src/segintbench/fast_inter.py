@@ -55,7 +55,10 @@ def find_intersections_vect(df1, df2):
         else:
             t = row['det2'] / row['det']
             p = df1['x1'][index] + t * dx1[index], df1['y1'][index] + t * dy1[index]
-            yield IntersectionType.TRUE_INTERSECTION, seg1, seg2, p
+            if t == 0 or t == 1 or row['det1'] == 0 or row['det1'] == row['det']:
+                yield IntersectionType.POINT_OVERLAP, seg1, seg2, p
+            else:
+                yield IntersectionType.TRUE_INTERSECTION, seg1, seg2, p
 
 
 def calculate_intersections_vectorized(segments):

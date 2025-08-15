@@ -114,7 +114,7 @@ def find_intersection(seg1, seg2, epsilon=None, conv=lambda x: x):
             yield Point(x1 + t * dx1, y1 + t * dy1)
     else:
         if ((det > 0 and 0.0 <= det1 <= det and 0.0 <= det2 <= det) or
-            (det < 0 and 0.0 >= det1 >= det and 0.0 >= det2 >= det)):
+                (det < 0 and 0.0 >= det1 >= det and 0.0 >= det2 >= det)):
             t = det2 / det
             yield Point(x1 + t * dx1, y1 + t * dy1)
 
@@ -198,6 +198,10 @@ def parse_timeout(val):
             return ((t.hour * 60) + t.minute) * 60 + t.second
     else:
         return val
+
+
+def get_command_file(cmdline):
+    return Path(cmdline.split(" ")[-1])  # simple heuristic that works for all commands above
 
 
 def parse_files(files, default_ext, exclude=None):
