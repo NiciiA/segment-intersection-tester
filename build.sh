@@ -20,12 +20,12 @@ pushd adapters
   mv LEDA-${LEDA_VERSION} deps/leda
 
   export LEDA_HOME="$(realpath deps/leda)"
-  export PATH="${PATH}:${LEDA_HOME}/bin"
+  export PATH="${PATH}:${LEDA_HOME}/bin:$(realpath cpp)/build-release:$(realpath python)"
   export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${LEDA_HOME}/lib"
 
-  echo "LEDA environment (also stored in venv):"
+  echo "Environment (also stored in venv):"
   echo "export LEDA_HOME=\"$LEDA_HOME\"" | tee -a ../.venv/bin/activate
-  echo 'export PATH="${PATH}:${LEDA_HOME}/bin"' | tee -a ../.venv/bin/activate
+  echo "export PATH=\"\${PATH}:\${LEDA_HOME}/bin:$(realpath cpp)/build-release:$(realpath python)\"" | tee -a ../.venv/bin/activate
   echo 'export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${LEDA_HOME}/lib"' | tee -a ../.venv/bin/activate
 
   pushd deps/leda

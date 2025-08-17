@@ -1,3 +1,5 @@
+#!/bin/env python
+
 import warnings
 from itertools import starmap
 

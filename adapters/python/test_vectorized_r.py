@@ -1,3 +1,5 @@
+#!/bin/env python
+
 from segintbench.fast_inter import calculate_intersections_vectorized, IntersectionType
 from segintbench.run import *
 

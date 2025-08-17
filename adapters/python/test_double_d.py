@@ -1,3 +1,5 @@
+#!/bin/env python
+
 from functools import partial
 
 from segintbench.run import *

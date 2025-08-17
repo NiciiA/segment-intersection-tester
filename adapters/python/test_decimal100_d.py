@@ -1,3 +1,5 @@
+#!/bin/env python
+
 from decimal import Decimal, getcontext
 
 from segintbench.run import *

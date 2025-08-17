@@ -1,3 +1,5 @@
+#!/bin/env python
+
 from fractions import Fraction
 
 from segintbench.run import *
