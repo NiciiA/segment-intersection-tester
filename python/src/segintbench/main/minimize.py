@@ -1,5 +1,5 @@
-import difflib
 import functools
+import pprint
 import shlex
 import subprocess
 import sys
@@ -30,82 +30,58 @@ def test_fails(tester_path, verbose, filepath):
         exit(1)
 
 
-def test_differs(first, second, suffix, allow_fail, verbose, filepath):
-    filepath = shlex.quote(filepath)
-    first_cmd = f"{first} {suffix}"
+def build_cmd(prefix, filepath, suffix):
+    first_cmd = f"{prefix} {suffix}"
     if "%1" in first_cmd:
         first_cmd = first_cmd % filepath
     else:
-        first_cmd = f"{first} -f {filepath} {suffix}"
+        first_cmd = f"{prefix} -f {filepath} {suffix}"
     first_cmd = first_cmd.strip()
+    return first_cmd
 
-    second_cmd = f"{second} {suffix}".strip()
-    if "%1" in second_cmd:
-        second_cmd = second_cmd % filepath
-    else:
-        second_cmd = f"{second} -f {filepath} {suffix}"
-    second_cmd = second_cmd.strip()
 
-    if verbose >= 2:
-        print(f"Running\n\t{first_cmd}\n\t{second_cmd}")
-
-    try:
-        first_res = subprocess.run(
-            first_cmd,
-            stdout=subprocess.PIPE,
-            stderr=sys.stderr,
-            shell=True
-        )
-        second_res = subprocess.run(
-            second_cmd,
-            stdout=subprocess.PIPE,
-            stderr=sys.stderr,
-            shell=True
-        )
-
-        if allow_fail:
-            if first_res.returncode != 0:
-                if second_res.returncode != 0:
-                    print(f"Both commands failed with codes {first_res.returncode} and {second_res.returncode}")
-                    return False
-                else:
-                    print(f"First command failed with code {first_res.returncode}!")
-                    return True
-            elif second_res.returncode != 0:
-                print(f"Second command failed with code {second_res.returncode}!")
-                return True
-        else:
-            if first_res.returncode != 0:
-                if second_res.returncode != 0:
-                    print(f"Error: Both commands failed with codes {first_res.returncode} and {second_res.returncode}!",
-                          file=sys.stderr)
-                    exit(1)
-                else:
-                    print(f"Error: First command failed with code {first_res.returncode}!", file=sys.stderr)
-                    exit(1)
-            elif second_res.returncode != 0:
-                print(f"Error: Second command failed with code {second_res.returncode}!", file=sys.stderr)
-                exit(1)
-
-        out1, out2 = first_res.stdout.decode().strip().splitlines(), second_res.stdout.decode().strip().splitlines()
-        if out1 != out2:
-            if verbose:
-                print("== <DIFF> ==")
-                print('\n'.join(difflib.ndiff(out1, out2)))
-                print("== </DIFF> ==")
-            return True
-        else:
-            return False
-    except FileNotFoundError:
-        print("Error: Tester executable not found or not executable.", file=sys.stderr)
+def test_differs(first, second, suffix, allow_fail, verbose, filepath):
+    filepath = shlex.quote(filepath)
+    cmds = {pre: build_cmd(pre, filepath, suffix) for pre in first + second}
+    # if verbose >= 2:
+    #     print("Running")
+    #     pprint.pprint({c: cmds[c] for c in first}, width=200)
+    #     pprint.pprint({c: cmds[c] for c in second}, width=200)
+    res = {pre: subprocess.run(cmd, capture_output=True, shell=True) for pre, cmd in cmds.items()}
+    if not allow_fail and any(r.returncode != 0 or r.stderr for r in res.values()):
+        print("Some commands failed:", file=sys.stderr)
+        pprint.pprint(res, stream=sys.stderr, width=200)
         exit(1)
+    elif verbose >= 2:
+        print("Results:")
+        pprint.pprint(res, width=200)
+    resv = {
+        pre: run.returncode or run.stdout.decode().strip().splitlines()
+        for pre, run in res.items()
+    }
+    ref = resv[first[0]]
+    still_differs = True
+    for pre in first:
+        if resv[pre] != ref:
+            still_differs = False
+            if verbose >= 3:
+                print(f"Result for {pre} differs from {first[0]} but shouldn't!")
+                # print("== <DIFF> ==")
+                # print('\n'.join(difflib.ndiff(ref, resv[pre])))
+                # print("== </DIFF> ==")
+    for pre in second:
+        if resv[pre] == ref:
+            still_differs = False
+            if verbose >= 3:
+                print(f"Result for {pre} matches {first[0]} but shouldn't!")
+    return still_differs
 
 
 @click.command()
 @click.argument('input', type=click.Path(dir_okay=False, exists=True, readable=True))
 @click.argument('output', type=click.Path(dir_okay=False, writable=True))
-@click.option('--first', '-a', default="")
-@click.option('--second', '-b', default="")
+@click.option('--first', '-a', default=[], multiple=True)
+@click.option('--second', '-b', default=[], multiple=True)
 @click.option('--suffix', '-c', default="")
 @click.option('--test', '-t', default="")
 @click.option("--allow-fail", is_flag=True)

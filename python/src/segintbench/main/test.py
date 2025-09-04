@@ -250,7 +250,7 @@ def collect(files, out):
     failed_cmds = collections.Counter()
     failed_files = collections.Counter()
     for metafile in tqdm(files):
-        with open(metafile) as f:
+        with open(metafile, "rt") as f:
             try:
                 meta = json.load(f)
             except JSONDecodeError as e:
@@ -259,12 +259,13 @@ def collect(files, out):
                 continue
         for k in ["result", "result_uniq", "time", "memory", "uniqfile", "uniqfile_stat", "uniqfile_md5"]:
             meta[k] = None
+
         if meta.get("exit_code", None) != 0:
             tqdm.write(f"Failed run in {metafile} with exit code {meta.get('exit_code', None)}", file=sys.stderr)
             failed_runs += 1
             failed_cmds[meta["command"]] += 1
             failed_files[meta["input"]] += 1
-        else:
+        elif meta.get("result", None) is None:
             try:
                 if meta.get("print_intersections", True):
                     with open(meta["output"], "rt") as csvfile:
@@ -276,20 +277,22 @@ def collect(files, out):
                         for row in csvfile.readlines():
                             segs_count += 1
                             segs.add(row)
-                        meta["result_uniq"] = segs_count
-                        meta["result"] = len(segs)
+                    meta["result_uniq"] = segs_count
+                    meta["result"] = len(segs)
 
-                    if segs:
-                        uniqfile = Path(meta["output"]).with_suffix(".uniq.csv")
-                        with open(uniqfile, "wt") as csvfile:
-                            csvfile.write("p_x;p_y\n")
-                            csvfile.writelines(sorted(segs))
-                        meta["uniqfile"] = str(uniqfile)
-                        meta["uniqfile_stat"] = tuple(uniqfile.stat())
-                        meta["uniqfile_md5"] = sh.md5sum(uniqfile).strip()
+                    uniqfile = Path(meta["output"]).with_suffix("").with_suffix(".uniq.csv")
+                    with open(uniqfile, "wt") as csvfile:
+                        csvfile.write("p_x;p_y\n")
+                        csvfile.writelines(sorted(segs))
+                    meta["uniqfile"] = str(uniqfile)
+                    meta["uniqfile_stat"] = tuple(uniqfile.stat())
+                    meta["uniqfile_md5"] = sh.md5sum(uniqfile).strip()
                 else:
-                    with open(meta["output"]) as f:
+                    with open(meta["output"], "rt") as f:
                         meta["result"], meta["time"], meta["memory"] = map(int, f.readlines())
+
+                with open(meta["output"], "wt") as f:
+                    json.dump(meta, f)
 
             except Exception as e:
                 msg = '\n\t'.join(traceback.format_exception_only(e)).strip()
@@ -339,7 +342,10 @@ def summarize(file, out, tablefmt, key, missing, exclude_files, only_files, excl
             continue
         if only_files and not re.search(only_files, row["input"]):
             continue
-        summary[row["input"]][row["command"]] = str(row[key])
+        val = str(row[key])
+        if key.endswith("_md5"):
+            val = val.split(" ")[0]
+        summary[row["input"]][row["command"]] = val
 
     sorted_inputs = sorted(summary.keys())
     full_commands = sorted(set(itertools.chain.from_iterable(v.keys() for v in summary.values())))
@@ -354,21 +360,29 @@ def summarize(file, out, tablefmt, key, missing, exclude_files, only_files, excl
         print(indent("\n".join(full_commands), "\t"), file=sys.stderr)
 
     table = []
+    patterns = defaultdict(list)
     for inp in sorted_inputs:
         row = [inp]
         ref = None
+        partition = defaultdict(set)
         if reference:
             ref = summary[inp].get(reference, None)
         for cmd in full_commands:
             cell = summary[inp].get(cmd, missing)
+            partition[cell].add(get_command_file(cmd).name)
             if ref is not None and (cell != ref and cell != missing):
                 cell = f"**{cell}**"
             row.append(cell)
+        patterns[frozenset(map(frozenset, partition.values()))].append(inp)
         if stats and inp in stats:
             s = stats[inp]
             s.pop("file", None)
             row.extend(s.values())
         table.append(row)
+
+    print(f"Difference patterns:", file=sys.stderr)
+    for part, files in patterns.items():
+        print(f"\t{len(part)} {{{"} {".join(map(", ".join,part))}}}: {len(files)}\n\t\t{',\n\t\t'.join(files)}", file=sys.stderr)
 
     headers = ["Input"] + [get_command_file(c).name for c in full_commands] + list(
         stats[sorted_inputs[0]].keys()) if stats else []
