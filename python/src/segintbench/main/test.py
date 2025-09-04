@@ -8,15 +8,15 @@ import json
 import pprint
 import resource
 import socket
-import sys
 import traceback
-from collections import defaultdict
-from concurrent.futures import ProcessPoolExecutor
 from itertools import product
-from json import JSONDecodeError
 from textwrap import indent
 
 import sh
+import sys
+from collections import defaultdict
+from concurrent.futures import ProcessPoolExecutor
+from json import JSONDecodeError
 from tqdm import tqdm
 from tqdm.contrib.concurrent import thread_map
 
@@ -382,7 +382,9 @@ def summarize(file, out, tablefmt, key, missing, exclude_files, only_files, excl
 
     print(f"Difference patterns:", file=sys.stderr)
     for part, files in patterns.items():
-        print(f"\t{len(part)} {{{"} {".join(map(", ".join,part))}}}: {len(files)}\n\t\t{',\n\t\t'.join(files)}", file=sys.stderr)
+        part_str = ') ('.join(map(', '.join, part))
+        files_str = ',\n\t\t'.join(files)
+        print(f"\t{len(part)} ({part_str}): {len(files)}\n\t\t{files_str}", file=sys.stderr)
 
     headers = ["Input"] + [get_command_file(c).name for c in full_commands] + list(
         stats[sorted_inputs[0]].keys()) if stats else []
