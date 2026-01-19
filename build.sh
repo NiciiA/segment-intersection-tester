@@ -3,7 +3,7 @@
 set -x
 set -e
 
-LEDA_VERSION=7.2.1
+LEDA_VERSION=7.2.2
 
 git submodule update --init --recursive
 
